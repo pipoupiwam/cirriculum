@@ -1,1 +1,1 @@
-sphinx-autobuild source build/
+sphinx-autobuild source docs/
