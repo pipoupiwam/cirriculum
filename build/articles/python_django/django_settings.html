@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django Settings organization &#8212; Mikhail Zaitsev 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=28c8e701" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="Matrices" href="matrices.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/images/logo.jpg" alt="Logo"/>
+    
+      
+    <h1 class="logo logo-name" style="font-size: 23px">Mikhail Zaitsev</h1>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb"><b>Senior Python / Django </b> developer, <b>devOps</b> & <b>Tech team lead.</b></p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=pipoupiwam&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python / Django</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="django-settings-organization">
+<h1>Django Settings organization<a class="headerlink" href="#django-settings-organization" title="Link to this heading">¶</a></h1>
+<p>Here is the way I like to organize a Django project settings.</p>
+<p>My main goal is to <strong>separate each relevant app settings into dedicated configuration files</strong>. This eases
+the <strong>readability and maintenance of settings</strong>.</p>
+<p>Another benefit is the enhanced comprehension of what settings
+changed during a code review process.</p>
+<section id="settings-folder-structure">
+<h2>Settings folder structure<a class="headerlink" href="#settings-folder-structure" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>project/project/
+<span class="w">    </span>__init__.py
+<span class="w">    </span>env.py
+<span class="w">    </span>local.py
+<span class="w">    </span>production.py
+
+<span class="w">    </span>settings/
+<span class="w">        </span>base/
+<span class="w">            </span>__init__.py
+<span class="w">            </span>django.py
+<span class="w">            </span>log.py
+<span class="w">            </span>third_party.py
+
+<span class="w">        </span>__init__.py
+</pre></div>
+</div>
+<section id="environment-file-configuration">
+<h3>Environment file configuration<a class="headerlink" href="#environment-file-configuration" title="Link to this heading">¶</a></h3>
+<p>To use <code class="code highlight bash docutils literal highlight-bash">django-environ<span class="w"> </span>.env</code> environment ,
+you need to implement the files below to ensures that <code class="code highlight bash docutils literal highlight-bash">.env</code> file is read before the settings files.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/env.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">environ</span>
+
+<span class="n">env</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">Env</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/settings/__init__.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">project.env</span> <span class="kn">import</span> <span class="n">env</span><span class="p">,</span> <span class="n">environ</span>
+
+<span class="c1"># It needs to be there to ensure the env file is read first</span>
+<span class="n">env</span><span class="o">.</span><span class="n">read_env</span><span class="p">(</span><span class="nb">str</span><span class="p">((</span><span class="n">environ</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="s2">&quot;.env&quot;</span><span class="p">)))</span>
+</pre></div>
+</div>
+</section>
+<section id="project-settings">
+<h3>Project settings<a class="headerlink" href="#project-settings" title="Link to this heading">¶</a></h3>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/base/django.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">project.env</span> <span class="kn">import</span> <span class="n">env</span>
+
+<span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">SERVER_NAME</span> <span class="o">=</span> <span class="n">env</span><span class="p">(</span><span class="s2">&quot;SERVER_NAME&quot;</span><span class="p">)</span>
+<span class="c1"># internal</span>
+<span class="n">INSTALLED_APPS</span> <span class="o">+=</span> <span class="p">[</span>
+    <span class="s2">&quot;my_project.apps.core&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="code highlight bash docutils literal highlight-bash">django.py</code> contains all settings relevant to the Django configuration of the framework.
+Note the <code class="code highlight python docutils literal highlight-python"><span class="kn">from</span> <span class="nn">project.env</span> <span class="kn">import</span> <span class="n">env</span></code></p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/base/log.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logging</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dictConfig</span><span class="p">(</span>
+<span class="p">{</span>
+    <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;disable_existing_loggers&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">&quot;formatters&quot;</span><span class="p">:</span> <span class="p">{</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="code highlight bash docutils literal highlight-bash">log.py</code> contains the logging configuration, custom logger classes etc…</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/base/third_party.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">THIRD_PARTY_PARAMETER</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<p><code class="code highlight bash docutils literal highlight-bash">third_party.py</code> contains the configuration of a third party application. The file must be named
+after the third party app, E.g. <code class="code highlight bash docutils literal highlight-bash">celery.py</code> if it is celery.
+<strong>Create on file per third party application</strong>.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/base/__init__.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.django</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa: F403 F401</span>
+<span class="kn">from</span> <span class="nn">.django_rq</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa: F403 F401</span>
+<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa: F403 F401</span>
+</pre></div>
+</div>
+<p>This file imports all settings defined in the folder.</p>
+</section>
+<section id="local-production-settings">
+<h3>Local &amp; Production settings<a class="headerlink" href="#local-production-settings" title="Link to this heading">¶</a></h3>
+<p>Based on the settings structure described above, we can easily import all settings with a single line <code class="code highlight python docutils literal highlight-python"><span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span></code></p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/local.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa: F403</span>
+
+<span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="c1"># dev tools</span>
+<span class="n">INSTALLED_APPS</span> <span class="o">+=</span> <span class="p">[</span>
+    <span class="s2">&quot;development_only_app&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Note that we imported everything from <code class="code highlight bash docutils literal highlight-bash">.base</code>, this means we imported everything defined in <code class="code highlight bash docutils literal highlight-bash">base/__init__.py</code></p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/production.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa: F403</span>
+
+<span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="c1"># prudction apps</span>
+<span class="n">INSTALLED_APPS</span> <span class="o">+=</span> <span class="p">[</span>
+    <span class="s2">&quot;sentry&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;production_only_app&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+
+
+    
+
+    
+  </body>
+</html>

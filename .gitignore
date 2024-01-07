@@ -1,0 +1,7 @@
+*.pyc
+.idea/
+.doctrees/
+*.swp
+.buildinfo
+
+
