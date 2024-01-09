@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Asyncio Fast API &amp; AsyncPG with SqlAlchemy &#8212; Mikhail Zaitsev 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=28c8e701" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Fast API &amp; PyTest" href="fast_api_testing.html" />
+    <link rel="prev" title="Fast API" href="index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/images/logo.jpg" alt="Logo"/>
+    
+      
+    <h1 class="logo logo-name" style="font-size: 23px">Mikhail Zaitsev</h1>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb"><b>Senior Python / Django </b> developer, <b>devOps</b> & <b>Tech team lead.</b></p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=cirriculum&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_django/index.html">Python / Django</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Fast API</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="asyncio-fast-api-asyncpg-with-sqlalchemy">
+<h1>Asyncio Fast API &amp; AsyncPG with SqlAlchemy<a class="headerlink" href="#asyncio-fast-api-asyncpg-with-sqlalchemy" title="Link to this heading">¶</a></h1>
+<p>The last two years, I focused on learning and practicing <code class="code highlight bash docutils literal highlight-bash">Python<span class="w"> </span>AsyncIO</code> development. I find AsyncIO very attractive
+in terms of performance, especially for web applications where request processing spends most of its time waiting
+for a database or an API call to return results.</p>
+<p>Most of my Asyncio experience is based on pure Python for real time processing tasks combined with <code class="code highlight bash docutils literal highlight-bash">Django</code> for web
+interfaces. <code class="code highlight bash docutils literal highlight-bash">Django<span class="w"> </span>ORM</code> is not ( yet ) fully asynchronous compatible, some complex queries need to be wrapped
+in an <code class="code highlight bash docutils literal highlight-bash">sync_to_async</code> decorator.</p>
+<p><code class="code highlight bash docutils literal highlight-bash">FastAPI</code> micro-framework combined with <code class="code highlight bash docutils literal highlight-bash">SqlAlchemy</code> seems to bee a good <strong>fully AsyncIo compatible environment</strong>, let’s
+build some APIs with it and explore it’s possibilities.</p>
+<section id="the-goal">
+<h2>The goal<a class="headerlink" href="#the-goal" title="Link to this heading">¶</a></h2>
+<p>Setup a working FastApi AsyncIO environment for a basic blog application with :</p>
+<ul class="simple">
+<li><p><code class="code highlight bash docutils literal highlight-bash">SqlAlchemy</code> as ORM with async sessions.</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">Alembic</code> to manage database migrations</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">FastAPI</code> Asynchronous API endpoints</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">Pytest</code> with AsyncIo for testing</p></li>
+</ul>
+<p>Full git repository : <a class="reference external" href="https://github.com/pipoupiwam/fastapi-blog">https://github.com/pipoupiwam/fastapi-blog</a></p>
+</section>
+<section id="python-requirements">
+<h2>Python requirements<a class="headerlink" href="#python-requirements" title="Link to this heading">¶</a></h2>
+<p>Install the following requirements in a <code class="code highlight bash docutils literal highlight-bash">virtualenv</code></p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/requirements.txt</code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Main APP</span>
+<span class="c1"># FastAPI framework</span>
+<span class="nv">fastapi</span><span class="o">==</span><span class="m">0</span>.108.0
+<span class="c1"># ORM</span>
+<span class="nv">SQLAlchemy</span><span class="o">==</span><span class="m">2</span>.0.25
+<span class="c1"># Replacement for psycopg2 to use asyncio with postgres.</span>
+<span class="nv">asyncpg</span><span class="o">==</span><span class="m">0</span>.29.0
+<span class="c1"># Database migrations</span>
+<span class="nv">alembic</span><span class="o">==</span><span class="m">1</span>.13.1
+</pre></div>
+</div>
+</section>
+<section id="project-structure">
+<h2>Project Structure<a class="headerlink" href="#project-structure" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>project/
+<span class="w">    </span>__init__.py
+<span class="w">    </span>app/
+<span class="w">        </span>database/
+<span class="w">            </span>db.py
+<span class="w">            </span>models.py
+<span class="w">            </span>services.py
+<span class="w">        </span>main.py
+<span class="w">        </span>schemas.py
+<span class="w">    </span>migrations/
+<span class="w">        </span>env.py
+<span class="w">        </span>script.py.mako
+<span class="w">    </span>alembic.ini
+<span class="w">    </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="database-setup">
+<h2>Database Setup<a class="headerlink" href="#database-setup" title="Link to this heading">¶</a></h2>
+<p>The database related code will be under <cite>app/database</cite>.</p>
+<section id="create-the-database">
+<h3>Create the database<a class="headerlink" href="#create-the-database" title="Link to this heading">¶</a></h3>
+<p>First of all we need to create a database for our project. In my case I created a database using <code class="code highlight bash docutils literal highlight-bash">psql</code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="p">&amp;</span>&gt;<span class="w"> </span>sudo<span class="w"> </span>su<span class="w"> </span>postgres
+<span class="p">&amp;</span>&gt;<span class="w"> </span>psql
+<span class="p">&amp;</span>&gt;<span class="w"> </span>CREATE<span class="w"> </span>DATABASE<span class="w"> </span>my_project_db<span class="p">;</span>
+DATABASE<span class="w"> </span>CREATED
+</pre></div>
+</div>
+</section>
+<section id="models">
+<h3>Models<a class="headerlink" href="#models" title="Link to this heading">¶</a></h3>
+<p>We will use SqlAlchemy for our ORM : <a class="reference external" href="https://docs.sqlalchemy.org/en/20/">https://docs.sqlalchemy.org/en/20/</a></p>
+<p>We will use <code class="code highlight python docutils literal highlight-python"><span class="n">AsyncSession</span></code> with the <cite>postgresql+asyncpg</cite> driver.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/app/database/db.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.ext.asyncio</span> <span class="kn">import</span> <span class="n">AsyncEngine</span><span class="p">,</span> <span class="n">AsyncSession</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">sessionmaker</span>
+
+
+<span class="n">DATABASE_URL</span> <span class="o">=</span> <span class="s2">&quot;postgresql+asyncpg://postgres:password@localhost:5432/project_db&quot;</span>
+
+<span class="n">engine</span> <span class="o">=</span> <span class="n">AsyncEngine</span><span class="p">(</span><span class="n">create_engine</span><span class="p">(</span><span class="n">DATABASE_URL</span><span class="p">,</span> <span class="n">echo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next we need to create a function to get a Session in order to query the database</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/app/main.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fastapi</span> <span class="n">FastAPI</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.ext.asyncio</span> <span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">sessionmaker</span>
+<span class="kn">from</span> <span class="nn">.database.db</span> <span class="kn">import</span> <span class="n">engine</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">get_db</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AsyncSession</span><span class="p">:</span>
+    <span class="n">async_session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">(</span>
+        <span class="n">engine</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="n">AsyncSession</span><span class="p">,</span> <span class="n">expire_on_commit</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">async_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">session</span>
+</pre></div>
+</div>
+<p>This function could have been declared in <cite>db.py</cite> but declaring it in the API makes it easier to implement testing
+fixtures.</p>
+</section>
+<section id="migrations">
+<h3>Migrations<a class="headerlink" href="#migrations" title="Link to this heading">¶</a></h3>
+<p><code class="code highlight bash docutils literal highlight-bash">Alembic</code> will help us manage our database migrations.
+Alembic documentation : <a class="reference external" href="https://alembic.sqlalchemy.org/en/latest/tutorial.html">https://alembic.sqlalchemy.org/en/latest/tutorial.html</a></p>
+<p>We must start by initializing alembic configuration for our project.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="p">&amp;</span>&gt;<span class="w"> </span>alembic<span class="w"> </span>init<span class="w"> </span>alembic
+</pre></div>
+</div>
+<p>This command will generate the following files :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>migrations/
+<span class="w">    </span>versions/
+<span class="w">        </span>.empty
+<span class="w">    </span>env.py
+<span class="w">    </span>script.py.mako
+alembic.ini
+</pre></div>
+</div>
+<p>To make things work we need to edit <cite>alembic.ini</cite> to specify to which database we will connect :</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/alembic.ini</code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlalchemy.url<span class="w"> </span><span class="o">=</span><span class="w"> </span>postgresql+asyncpg://postgres:password@localhost:5432/project_db
+</pre></div>
+</div>
+<p>Then we need to inform <code class="code highlight bash docutils literal highlight-bash">alembic</code> about the existence of our database models.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/alembic.ini</code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>from<span class="w"> </span>app.database.models<span class="w"> </span>import<span class="w"> </span>Base
+<span class="nv">target_metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>Base.metadata
+</pre></div>
+</div>
+<p>The next step is to generate the initial migrations for our models</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>alembic<span class="w"> </span>revision<span class="w"> </span>--autogenerate<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;create_author_article&quot;</span></code></p>
+<p>This command will generate a migration file in <code class="code highlight bash docutils literal highlight-bash">project/versions</code></p>
+<p>Finally we can apply the generated migration in order to create the <cite>Author</cite> and <cite>Article</cite> tables in database.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>alembic<span class="w"> </span>upgrade<span class="w"> </span>head</code></p>
+</section>
+<section id="crud-operations">
+<h3>CRUD operations<a class="headerlink" href="#crud-operations" title="Link to this heading">¶</a></h3>
+<p>We will extract the “business” logic of our application into dedicated Services. This allows us to create reusable and
+easily testable functions.</p>
+<p>The API layer will be responsible for all the permissions, authorization logic and will use our services to implement
+the business logic.</p>
+<p>Designing our code this way allows us to test our services in a true unitary manner.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/app/database/services.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">HTTPException</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">select</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.ext.asyncio</span> <span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span> <span class="nc">ArticleService</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Service class for the Article model.</span>
+<span class="sd">    You should implement Article related methods in this class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">list_articles</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Article</span><span class="p">))</span>
+        <span class="n">articles</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">articles</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_article</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">article_id</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Article</span><span class="p">,</span> <span class="n">article_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Article does not exist&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">create_article</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">author_id</span><span class="p">):</span>
+        <span class="k">await</span> <span class="n">AuthorService</span><span class="o">.</span><span class="n">get_author</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">author_id</span><span class="o">=</span><span class="n">author_id</span><span class="p">)</span>
+        <span class="n">article_instance</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Article</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="n">author_id</span><span class="o">=</span><span class="n">author_id</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg]</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">article_instance</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">article_instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">article_instance</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">delete_article</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">article_id</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ArticleService</span><span class="o">.</span><span class="n">get_article</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">article_id</span><span class="o">=</span><span class="n">article_id</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleting Article : </span><span class="si">{</span><span class="n">article_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">instance</span>
+
+<span class="k">class</span> <span class="nc">AuthorService</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Service class for the Author model.</span>
+<span class="sd">    You should implement Author related methods in this class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_author</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">author_id</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Author</span><span class="p">,</span> <span class="n">author_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Author does not exist&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">list_authors</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Author</span><span class="p">))</span>
+        <span class="n">authors</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">authors</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">create_author</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">):</span>
+        <span class="n">author_instance</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Author</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="n">last_name</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg]</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">author_instance</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">author_instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">author_instance</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">delete_author</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">author_id</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AuthorService</span><span class="o">.</span><span class="n">get_author</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">author_id</span><span class="o">=</span><span class="n">author_id</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">instance</span>
+</pre></div>
+</div>
+<p>These services may be extended later to implement some more complex features.</p>
+</section>
+</section>
+<section id="pydantic-schemas">
+<h2>Pydantic schemas<a class="headerlink" href="#pydantic-schemas" title="Link to this heading">¶</a></h2>
+<p>In order to ease the serialization of our database models we will use <code class="code highlight bash docutils literal highlight-bash">pydantic</code>.</p>
+<p>Pydantic documentation : <a class="reference external" href="https://docs.pydantic.dev/latest/concepts/models/">https://docs.pydantic.dev/latest/concepts/models/</a></p>
+<p>This library will allow us automatically serialize our <code class="code highlight bash docutils literal highlight-bash">SqlAlchemy</code> into <code class="code highlight bash docutils literal highlight-bash">JSON</code> and vice-versa.</p>
+<p>Another benefit is the automatically generated <code class="code highlight bash docutils literal highlight-bash">OpenAPI</code> schema which provides us with a <code class="code highlight bash docutils literal highlight-bash">Swagger</code>
+testable documentation.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/appschemas.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+
+<span class="c1"># Article Model</span>
+
+<span class="k">class</span> <span class="nc">ArticleBase</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">content</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">author_id</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="k">class</span> <span class="nc">Article</span><span class="p">(</span><span class="n">ArticleBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Database model for Article table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+        <span class="n">orm_mode</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="c1"># Author Model</span>
+<span class="k">class</span> <span class="nc">AuthorBase</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">first_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">last_name</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">AuthorBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Database model for Author table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">datetime</span>
+
+
+    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+        <span class="n">orm_mode</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<p><code class="code highlight python docutils literal highlight-python"><span class="n">ArticleBase</span></code> Schema define all writable elements of our model, it is <strong>not mapped</strong> to our SqlAlchemy Article model
+( <code class="code highlight bash docutils literal highlight-bash"><span class="nv">orm_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>True</code> is absent ). Also it does not implement the <code class="code highlight bash docutils literal highlight-bash">created_at</code> and <code class="code highlight bash docutils literal highlight-bash">updated_at</code> fields as we do not want to
+expose these fields to the writable APIs.</p>
+<p>The <code class="code highlight bash docutils literal highlight-bash">Article</code> model inherits <code class="code highlight python docutils literal highlight-python"><span class="n">ArticleBase</span></code> and specifies that <strong>it is</strong> an SqlAlchemy mapped model with  <code class="code highlight bash docutils literal highlight-bash"><span class="nv">orm_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>True</code></p>
+<p>This mechanism allows us to reproduce the DjangoRestFramework <code class="code highlight bash docutils literal highlight-bash"><span class="nv">read_only</span><span class="o">=</span>True/False</code> system.</p>
+<p>The same logic applies to the <code class="code highlight bash docutils literal highlight-bash">Author</code> models.</p>
+</section>
+<section id="apis">
+<h2>APIs<a class="headerlink" href="#apis" title="Link to this heading">¶</a></h2>
+<p>Finally we can implement the APIs</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/app/main.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">status</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.ext.asyncio</span> <span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">sessionmaker</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">schemas</span>
+<span class="kn">from</span> <span class="nn">.database.db</span> <span class="kn">import</span> <span class="n">engine</span>
+<span class="kn">from</span> <span class="nn">.database.services</span> <span class="kn">import</span> <span class="n">AuthorService</span><span class="p">,</span> <span class="n">ArticleService</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">get_db</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AsyncSession</span><span class="p">:</span>
+    <span class="n">async_session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">(</span>
+        <span class="n">engine</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="n">AsyncSession</span><span class="p">,</span> <span class="n">expire_on_commit</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">async_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">session</span>
+
+
+<span class="c1"># Authors</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/authors&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="nb">list</span><span class="p">[</span><span class="n">schemas</span><span class="o">.</span><span class="n">Author</span><span class="p">],</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_200_OK</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">list_authors</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List authors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AuthorService</span><span class="o">.</span><span class="n">list_authors</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">authors</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/authors/</span><span class="si">{author_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">schemas</span><span class="o">.</span><span class="n">Author</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_200_OK</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">delete_author</span><span class="p">(</span><span class="n">author_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AuthorService</span><span class="o">.</span><span class="n">get_author</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">author_id</span><span class="o">=</span><span class="n">author_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">author</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/authors&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">schemas</span><span class="o">.</span><span class="n">Author</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_201_CREATED</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">create_author</span><span class="p">(</span><span class="n">author</span><span class="p">:</span> <span class="n">schemas</span><span class="o">.</span><span class="n">AuthorBase</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an Author</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">author_instance</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AuthorService</span><span class="o">.</span><span class="n">create_author</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+        <span class="n">first_name</span><span class="o">=</span><span class="n">author</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span>
+        <span class="n">last_name</span><span class="o">=</span><span class="n">author</span><span class="o">.</span><span class="n">last_name</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">author_instance</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/authors/</span><span class="si">{author_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_204_NO_CONTENT</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">delete_author</span><span class="p">(</span><span class="n">author_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+    <span class="k">await</span> <span class="n">AuthorService</span><span class="o">.</span><span class="n">delete_author</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">author_id</span><span class="o">=</span><span class="n">author_id</span><span class="p">)</span>
+
+
+<span class="c1"># Articles</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/articles&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="nb">list</span><span class="p">[</span><span class="n">schemas</span><span class="o">.</span><span class="n">Article</span><span class="p">],</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_200_OK</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">list_articles</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List Articles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">articles</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ArticleService</span><span class="o">.</span><span class="n">list_articles</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">articles</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/articles/</span><span class="si">{article_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">schemas</span><span class="o">.</span><span class="n">Article</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_200_OK</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">get_author</span><span class="p">(</span><span class="n">article_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ArticleService</span><span class="o">.</span><span class="n">get_article</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">article_id</span><span class="o">=</span><span class="n">article_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">author</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/articles&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">schemas</span><span class="o">.</span><span class="n">Article</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_201_CREATED</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">create_article</span><span class="p">(</span><span class="n">article</span><span class="p">:</span> <span class="n">schemas</span><span class="o">.</span><span class="n">ArticleBase</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an article</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">article_instance</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ArticleService</span><span class="o">.</span><span class="n">create_article</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">article</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+        <span class="n">content</span><span class="o">=</span><span class="n">article</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+        <span class="n">author_id</span><span class="o">=</span><span class="n">article</span><span class="o">.</span><span class="n">author_id</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">article_instance</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/articles/</span><span class="si">{article_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_204_NO_CONTENT</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">delete_article</span><span class="p">(</span><span class="n">article_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)):</span>
+    <span class="k">await</span> <span class="n">ArticleService</span><span class="o">.</span><span class="n">delete_article</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">article_id</span><span class="o">=</span><span class="n">article_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now you should be able to run the API and visit <a class="reference external" href="http://localhost:8000/docs">http://localhost:8000/docs</a></p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>uvicorn<span class="w"> </span>app.main:app<span class="w"> </span>--reload</code></p>
+<p>Note that each api view is decorated with <code class="code highlight bash docutils literal highlight-bash">@app.method</code> and provide information about :</p>
+<ul class="simple">
+<li><p>The HTTP method <code class="code highlight python docutils literal highlight-python"><span class="nd">@app</span><span class="o">.</span><span class="n">get</span></code> of the endpoint</p></li>
+<li><p>The route and url parameters <code class="code highlight python docutils literal highlight-python"><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/articles/</span><span class="si">{article_id}</span><span class="s2">&quot;</span><span class="p">)</span></code></p></li>
+<li><p>The response Model <code class="code highlight python docutils literal highlight-python"><span class="n">response_model</span><span class="o">=</span><span class="n">schemas</span><span class="o">.</span><span class="n">Article</span></code> used for serialization</p></li>
+<li><p>The HTTP status_code <code class="code highlight python docutils literal highlight-python"><span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_200_OK</span></code></p></li>
+</ul>
+<p>This information will be used by FastAPI to generate the OpenAPI schema, validate and serialize input and output JSON
+data</p>
+</section>
+<section id="customizing-the-api-documentation">
+<h2>Customizing the API documentation<a class="headerlink" href="#customizing-the-api-documentation" title="Link to this heading">¶</a></h2>
+<p>Swagger customisation is located in a separate article</p>
+<p>Read <a class="reference internal" href="fast_api_swagger.html"><span class="doc">Customize Fast API swagger documentation</span></a></p>
+</section>
+<section id="testing-with-pytest">
+<h2>Testing with Pytest<a class="headerlink" href="#testing-with-pytest" title="Link to this heading">¶</a></h2>
+<p>The test part of this project is located in a separate article.</p>
+<p>Read <a class="reference internal" href="fast_api_testing.html"><span class="doc">Fast API &amp; PyTest</span></a></p>
+</section>
+<section id="conclusions">
+<h2>Conclusions<a class="headerlink" href="#conclusions" title="Link to this heading">¶</a></h2>
+<p>We implemented a basic API writing and reading a database, with schema migrations and data serialization.</p>
+<p>FastAPI is a good way to develop Asynchronous APIs for micro services.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+
+
+    
+
+    
+  </body>
+</html>

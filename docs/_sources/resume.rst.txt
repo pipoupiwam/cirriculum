@@ -138,3 +138,4 @@ Articles
     articles/devops/index
     articles/management/index
     articles/python_django/index
+    articles/fast_api/index

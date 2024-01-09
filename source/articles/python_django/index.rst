@@ -1,5 +1,5 @@
 Python / Django
-===========
+=================
 
 Articles about Python with or without Django
 
@@ -9,4 +9,5 @@ Articles about Python with or without Django
 
     matrices
     django_settings
+    django_websockets
 

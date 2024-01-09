@@ -13,6 +13,7 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Fast API" href="../fast_api/index.html" />
     <link rel="prev" title="Matrices" href="matrices.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -43,7 +44,7 @@
 
 
 <p>
-<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=pipoupiwam&type=watch&count=true&size=large&v=2"
+<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=cirriculum&type=watch&count=true&size=large&v=2"
   allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
 </p>
 
@@ -56,6 +57,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Python / Django</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fast_api/index.html">Fast API</a></li>
 </ul>
 
 
@@ -92,8 +94,9 @@ changed during a code review process.</p>
 <span class="w">        </span>__init__.py
 </pre></div>
 </div>
+</section>
 <section id="environment-file-configuration">
-<h3>Environment file configuration<a class="headerlink" href="#environment-file-configuration" title="Link to this heading">¶</a></h3>
+<h2>Environment file configuration<a class="headerlink" href="#environment-file-configuration" title="Link to this heading">¶</a></h2>
 <p>To use <code class="code highlight bash docutils literal highlight-bash">django-environ<span class="w"> </span>.env</code> environment ,
 you need to implement the files below to ensures that <code class="code highlight bash docutils literal highlight-bash">.env</code> file is read before the settings files.</p>
 <p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/env.py</code></p>
@@ -111,7 +114,7 @@ you need to implement the files below to ensures that <code class="code highligh
 </div>
 </section>
 <section id="project-settings">
-<h3>Project settings<a class="headerlink" href="#project-settings" title="Link to this heading">¶</a></h3>
+<h2>Project settings<a class="headerlink" href="#project-settings" title="Link to this heading">¶</a></h2>
 <p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/base/django.py</code></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">project.env</span> <span class="kn">import</span> <span class="n">env</span>
 
@@ -153,7 +156,7 @@ after the third party app, E.g. <code class="code highlight bash docutils litera
 <p>This file imports all settings defined in the folder.</p>
 </section>
 <section id="local-production-settings">
-<h3>Local &amp; Production settings<a class="headerlink" href="#local-production-settings" title="Link to this heading">¶</a></h3>
+<h2>Local &amp; Production settings<a class="headerlink" href="#local-production-settings" title="Link to this heading">¶</a></h2>
 <p>Based on the settings structure described above, we can easily import all settings with a single line <code class="code highlight python docutils literal highlight-python"><span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span></code></p>
 <p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/local.py</code></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># noqa: F403</span>
@@ -179,7 +182,6 @@ after the third party app, E.g. <code class="code highlight bash docutils litera
 <span class="p">]</span>
 </pre></div>
 </div>
-</section>
 </section>
 </section>
 

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Make Freezegun work with SqlAlchemy &#8212; Mikhail Zaitsev 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=28c8e701" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="Customize Fast API swagger documentation" href="fast_api_swagger.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/images/logo.jpg" alt="Logo"/>
+    
+      
+    <h1 class="logo logo-name" style="font-size: 23px">Mikhail Zaitsev</h1>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb"><b>Senior Python / Django </b> developer, <b>devOps</b> & <b>Tech team lead.</b></p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=cirriculum&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_django/index.html">Python / Django</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Fast API</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="make-freezegun-work-with-sqlalchemy">
+<h1>Make Freezegun work with SqlAlchemy<a class="headerlink" href="#make-freezegun-work-with-sqlalchemy" title="Link to this heading">¶</a></h1>
+<p><code class="code highlight bash docutils literal highlight-bash">Freezegun</code> allows to freeze time during tests, this is particularly useful when testing APIs with timestamps.</p>
+<p>By default <code class="code highlight bash docutils literal highlight-bash">freezegun</code> does not work well with <code class="code highlight bash docutils literal highlight-bash">SqlAlchemy</code>, the timestamps it generates are not frozen.</p>
+<p>You can use the following approach to make <code class="code highlight bash docutils literal highlight-bash">freezegun</code> work with <code class="code highlight bash docutils literal highlight-bash">SqlAlchemy</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">_now</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_now</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>Freezegun documentation : <a class="reference external" href="https://github.com/spulec/freezegun">https://github.com/spulec/freezegun</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+
+
+    
+
+    
+  </body>
+</html>

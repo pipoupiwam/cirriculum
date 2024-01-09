@@ -15,7 +15,12 @@ release = '0.1'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.githubpages"]
+extensions = [
+    "sphinx.ext.githubpages",
+    'sphinx.ext.autosectionlabel'
+]
+
+autosectionlabel_prefix_document = True
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -41,7 +46,7 @@ html_theme_options = {
     "logo_name": True,   # todo  seems not to work prepoerly
     "github_button": True,
     'github_user': 'pipoupiwam',
-    'github_repo': 'pipoupiwam',
+    'github_repo': 'cirriculum',
     "fixed_sidebar": True,
     "show_powered_by": False,
 }

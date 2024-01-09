@@ -20,7 +20,7 @@ Another benefit is the enhanced comprehension of what settings
 changed during a code review process.
 
 Settings folder structure
-*******************
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
