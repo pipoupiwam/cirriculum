@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Using pyInstaller to package our FastAPI &#8212; Mikhail Zaitsev 0.1 documentation</title>
+    <title>Using PyInstaller to package our FastAPI &#8212; Mikhail Zaitsev 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=28c8e701" />
     <script src="../../_static/documentation_options.js?v=2709fde1"></script>
@@ -13,6 +13,8 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Make Freezegun work with SqlAlchemy" href="sqlalchemy_freezegun.html" />
+    <link rel="prev" title="Customize Fast API swagger documentation" href="fast_api_swagger.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
@@ -51,11 +53,11 @@
 
 
 <h3>Navigation</h3>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../python_django/index.html">Python / Django</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html">Fast API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Fast API</a></li>
 </ul>
 
 
@@ -68,8 +70,63 @@
           <div class="body" role="main">
             
   <section id="using-pyinstaller-to-package-our-fastapi">
-<h1>Using pyInstaller to package our FastAPI<a class="headerlink" href="#using-pyinstaller-to-package-our-fastapi" title="Link to this heading">¶</a></h1>
-<p>Not yet available</p>
+<h1>Using PyInstaller to package our FastAPI<a class="headerlink" href="#using-pyinstaller-to-package-our-fastapi" title="Link to this heading">¶</a></h1>
+<p>A simple way to deploy a micro-service is to create an executable. This way of packaging our code has several
+advantages :</p>
+<ul class="simple">
+<li><p>No need to manage dependencies : Every dependency will</p></li>
+<li><p>Ease of deployment : A single executable to run</p></li>
+<li><p>Can be used for Serverless deployments : AWS lamda</p></li>
+</ul>
+<section id="pyinstaller">
+<h2>PyInstaller<a class="headerlink" href="#pyinstaller" title="Link to this heading">¶</a></h2>
+<p>To package our API we will use PyInstaller</p>
+<p>PyInstaller documentation :  <a class="reference external" href="https://www.pyinstaller.org/en/stable/usage.html">https://www.pyinstaller.org/en/stable/usage.html</a></p>
+<section id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h3>
+<p>Install <code class="code highlight bash docutils literal highlight-bash">PyInstaller</code></p>
+<p><code class="code highlight bash docutils literal highlight-bash">pip<span class="w"> </span>install<span class="w"> </span>pyinstaller</code></p>
+</section>
+<section id="entry-point">
+<h3>Entry point<a class="headerlink" href="#entry-point" title="Link to this heading">¶</a></h3>
+<p>The code of our application is located in <code class="code highlight bash docutils literal highlight-bash">project/app/main.py</code>. While in development run our application using
+<code class="code highlight bash docutils literal highlight-bash">uvicorn<span class="w"> </span>app.main:app<span class="w"> </span>--reload</code>.</p>
+<p>With <code class="code highlight bash docutils literal highlight-bash">PyInstaller</code> we cannot simply generate an executable from this file, it will mess with <code class="code highlight bash docutils literal highlight-bash">Python<span class="w"> </span>imports</code>,
+we need to create an entrypoint in the root folder of our project :</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/pyinstaller_entrypoint.txt</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">uvicorn</span>
+
+<span class="kn">from</span> <span class="nn">app.main</span> <span class="kn">import</span> <span class="n">app</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file is used by pyinstaller to build the distributable binary file.</span>
+<span class="sd">It is at the project root folder to make sure that imports work properly.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="k">def</span> <span class="nf">serve</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serve the web application.&quot;&quot;&quot;</span>
+    <span class="n">uvicorn</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8000</span><span class="p">)</span>  <span class="c1"># or whatever port number you want.</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">serve</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This file launch the application from the root folder to ensure all our import statements work correctly.</p>
+</section>
+<section id="executable">
+<h3>Executable<a class="headerlink" href="#executable" title="Link to this heading">¶</a></h3>
+<p>Let’s create a single file executable from our entrypoint :</p>
+<p><code class="code highlight bash docutils literal highlight-bash">pyinstaller<span class="w"> </span>pyinstaller_entrypoint.py<span class="w"> </span>--name<span class="w"> </span>api<span class="w"> </span>--hidden-import<span class="o">=</span>asyncpg.pgproto.pgproto<span class="w"> </span>--onefile</code></p>
+<p>Note the <code class="code highlight bash docutils literal highlight-bash">--hidden-import<span class="o">=</span>asyncpg.pgproto.pgproto</code>, this is related to <code class="code highlight bash docutils literal highlight-bash">SqlAlchemy</code> which imports are
+not detected by <code class="code highlight bash docutils literal highlight-bash">PyInstaller</code>, without the hidden import our executable would fail.</p>
+</section>
+<section id="conclusion">
+<h3>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">¶</a></h3>
+<p>It is very easy to create a self containing python executable, we can distribute and deploy our project easily without
+worrying for dependencies management.</p>
+</section>
+</section>
 </section>
 
 
