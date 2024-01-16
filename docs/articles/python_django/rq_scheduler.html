@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Scheduling RQ tasks with RQ scheduler &#8212; Mikhail Zaitsev 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=28c8e701" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Fast API" href="../fast_api/index.html" />
+    <link rel="prev" title="Django websockets" href="django_websockets.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/images/logo.jpg" alt="Logo"/>
+    
+      
+    <h1 class="logo logo-name" style="font-size: 23px">Mikhail Zaitsev</h1>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb"><b>Senior Python / Django </b> developer, <b>devOps</b> & <b>Tech team lead.</b></p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=cirriculum&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python / Django</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fast_api/index.html">Fast API</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="scheduling-rq-tasks-with-rq-scheduler">
+<h1>Scheduling RQ tasks with RQ scheduler<a class="headerlink" href="#scheduling-rq-tasks-with-rq-scheduler" title="Link to this heading">¶</a></h1>
+<p><code class="code b docutils literal notranslate"><span class="pre">RqScheduler</span></code> is a lightweight alternative to <code class="code b docutils literal notranslate"><span class="pre">Celery-beat</span></code>, it does only one thing : <strong>Schedule recurring jobs</strong></p>
+<p>RqScheduler documentation : <a class="reference external" href="https://github.com/rq/rq-scheduler">https://github.com/rq/rq-scheduler</a></p>
+<p>The RqScheduler daemon will tik every second and add jobs that require to be executed to the RQ job queue :</p>
+<p><code class="code b docutils literal notranslate"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">rqscheduler</span> <span class="pre">--interval</span> <span class="pre">1</span></code></p>
+<p>But contrary to <code class="code b docutils literal notranslate"><span class="pre">celery-beat</span></code>, where we define the jobs and intervals in a dictionary, <code class="code b docutils literal notranslate"><span class="pre">RqScheduler</span></code> jobs need
+to be scheduled programmatically at application startup.</p>
+<p>We could schedule our jobs in a Django Application <code class="code b docutils literal notranslate"><span class="pre">AppConfig</span></code> file, such as :</p>
+<p><code class="code b docutils literal notranslate"><span class="pre">&amp;&gt;</span> <span class="pre">cat</span> <span class="pre">project/apps/my_app/apps.py</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyAppConfig</span><span class="p">(</span><span class="n">AppConfig</span><span class="p">):</span>
+    <span class="n">default_auto_field</span> <span class="o">=</span> <span class="s2">&quot;django.db.models.BigAutoField&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;project.apps.myapp&quot;</span>
+
+    <span class="k">def</span> <span class="nf">ready</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span>
+            <span class="n">scheduled_time</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">my_job</span><span class="p">,</span>
+            <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+            <span class="n">repeat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p>This could work in development, but it will create problems in production.
+Several django instances will be running inside <code class="code b docutils literal notranslate"><span class="pre">uwsgi/gunicorn</span></code> workers and schedule the tasks multiple times</p>
+<p>There is an elegant and easy solution to ensure jobs are scheduled in a single entrypoint : <strong>override</strong> <code class="code b docutils literal notranslate"><span class="pre">RqScheduler</span></code>
+<strong>django command and schedule our jobs there.</strong></p>
+<p><code class="code b docutils literal notranslate"><span class="pre">&amp;&gt;</span> <span class="pre">cat</span> <span class="pre">project/apps/my_app/management/commands/rqscheduler.py</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">django_rq</span>
+<span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">from</span> <span class="nn">django_rq.management.commands</span> <span class="kn">import</span> <span class="n">rqscheduler</span>
+
+<span class="n">scheduler</span> <span class="o">=</span> <span class="n">django_rq</span><span class="o">.</span><span class="n">get_scheduler</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>  <span class="c1"># use the default queue of Django-RQ</span>
+
+<span class="k">def</span> <span class="nf">clear_scheduled_jobs</span><span class="p">():</span>
+    <span class="c1"># Delete any existing jobs in the scheduler when the app starts up</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">get_jobs</span><span class="p">():</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Deleting scheduled job </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">register_scheduled_jobs</span><span class="p">():</span>
+    <span class="c1"># do your scheduling here</span>
+    <span class="n">scheduler</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span>
+        <span class="n">scheduled_time</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">my_job</span><span class="p">,</span>
+        <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+        <span class="n">repeat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">rqscheduler</span><span class="o">.</span><span class="n">Command</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Source : https://github.com/rq/rq-scheduler/issues/51#issuecomment-362352497</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">help</span> <span class="o">=</span> <span class="s2">&quot;Run RqScheduler and schedule jobs&quot;</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># This is necessary to prevent duplicates</span>
+        <span class="n">clear_scheduled_jobs</span><span class="p">()</span>
+        <span class="n">register_scheduled_jobs</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">¶</a></h2>
+<p>With this approach we will run the scheduler and automatically schedule all required jobs !</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+
+
+    
+
+    
+  </body>
+</html>
