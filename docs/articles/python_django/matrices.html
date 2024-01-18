@@ -71,7 +71,164 @@
             
   <section id="matrices">
 <h1>Matrices<a class="headerlink" href="#matrices" title="Link to this heading">¶</a></h1>
-<p>How to store and manipulate large matrices within a django environment</p>
+<p>In a previous experience I had to develop a backend system to store data matrices efficiently.
+These matrices were used to perform real time computations in a <code class="code highlight bash docutils literal highlight-bash">Django</code> application.</p>
+<p>Compute process :</p>
+<ul class="simple">
+<li><p>Request the backend</p></li>
+<li><p>Retrieve matrices</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">Load<span class="w"> </span>matrices<span class="w"> </span>into<span class="w"> </span>numpy<span class="w"> </span>nArrays</code></p></li>
+<li><p>Perform computation</p></li>
+<li><p>Return results</p></li>
+</ul>
+<p>All this process had to be performed as fast as possible. The matrices could have different shapes ( square, rectangular )
+and contain <strong>more than 2 000 rows and lines.</strong></p>
+<p>Each call to our APIs could request several matrices to perform it’s computations. The performances of our backend were
+crushed by these calls, we had to redesign the system in order order to solve performance issues and give us a margin
+to grow.</p>
+<section id="legacy">
+<h2>Legacy<a class="headerlink" href="#legacy" title="Link to this heading">¶</a></h2>
+<p>First lets explore the legacy matrices storage system, its advantages and disadvantages.</p>
+<p>The Matrices were stored in the database and modelized as follows :</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>matrix/models.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">)</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">DecimalField</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">DecimalField</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">MATRIX_CHOICES</span><span class="p">,</span> <span class="o">....</span><span class="p">)</span>
+    <span class="n">weekday</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">DAYS_OF_WEEK</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">TripDistance</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="n">from_node</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Node</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="n">to_node</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Node</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="n">distance</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallPositiveIntegerField</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Advantages :</p>
+<ul class="simple">
+<li><p>A matrix entry can easily be retrieved <code class="code highlight python docutils literal highlight-python"><span class="n">trip</span> <span class="o">=</span> <span class="n">TripDistance</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">matrix</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">from_node_id</span><span class="o">=</span><span class="mi">111</span><span class="p">,</span> <span class="n">to_node_id</span><span class="o">=</span><span class="mi">222</span><span class="p">)</span></code></p></li>
+<li><p>A <strong>single</strong> matrix entry can easily be edited <code class="code highlight python docutils literal highlight-python"><span class="n">trip</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mi">123</span><span class="p">)</span></code></p></li>
+<li><p>Retrieving precise matrix entries is very fast</p></li>
+<li><p>Business logic is deported to the database, the matrix and it’s entries are modelized as single entities</p></li>
+</ul>
+<p>Disadvantages :</p>
+<ul class="simple">
+<li><p>The more nodes you want to retrieve the more time it takes</p></li>
+<li><p>Adding a line or a column in the matrix will generate a lot of queries</p></li>
+<li><p>Working with numpy is hard, you need to retrieve the entries you are interested in and rearrange them in lines and columns to create a <code class="code highlight python docutils literal highlight-python"><span class="n">Numpy</span></code> matrix</p></li>
+<li><p>Editing several ( hundreds, thousands ) of entries is complex. It is easy to edit a <code class="code highlight python docutils literal highlight-python"><span class="n">Numpy</span></code> matrix, but then it needs to be denormalized into database objects.</p></li>
+<li><p>During edition we need to keep track of  modified entries and update only the associated database objects. Updating the whole matrix would generate to many database queries.</p></li>
+</ul>
+<p>Overall this database modelization worked for a time, but hit a <strong>performance bottleneck</strong> when matrices reached
+<strong>800 nodes</strong>, which correspond to <code class="code highlight bash docutils literal highlight-bash"><span class="m">800</span><span class="w"> </span>*<span class="w"> </span><span class="nv">800</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">640</span><span class="w"> </span><span class="m">000</span></code> database entries ( for a single matrix ).</p>
+<p>Our matrices were growing, we added caching and several “easy” optimizations, but the remedy was only temporary,
+<strong>we faced a real bottleneck, the database modelization had to be redesigned</strong>.</p>
+</section>
+<section id="new-design">
+<h2>New design<a class="headerlink" href="#new-design" title="Link to this heading">¶</a></h2>
+<p>To redesign the system I considered several options to store the matrices, such as <code class="code highlight bash docutils literal highlight-bash">Redis</code> or <code class="code highlight bash docutils literal highlight-bash">file<span class="w"> </span>system</code> :</p>
+<ul class="simple">
+<li><p><code class="code highlight bash docutils literal highlight-bash">Redis</code> did not guarantee sufficient data longevity, our redis cluster could crash and we could loose the data.</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">the<span class="w"> </span>file<span class="w"> </span>system</code> was not an option because of our <code class="code highlight bash docutils literal highlight-bash">stateless<span class="w"> </span>infrastructure</code> with multiple servers, one server could edit a matrix without others knowing about it.</p></li>
+</ul>
+<p>I ended up using the database again, but instead of storing each matrix entry separately, I stored the whole matrix
+as a binary representation of a <code class="code highlight python docutils literal highlight-python"><span class="n">Numpy</span> <span class="n">Array</span></code> directly in a <code class="code highlight python docutils literal highlight-python"><span class="n">Postgres</span> <span class="n">BinaryField</span></code>.</p>
+<p>One major benefit of this approach is that the code did not have to serialize / deserialize the matrix when writing / reading
+it from the database, the serialization/deserialization process was pretty slow and avoiding it greatly improved the overall performances.</p>
+<p>To make this approach reusable and easy to use, I created a <strong>Custom Django database field</strong></p>
+<p>Django custom field documentation : <a class="reference external" href="https://docs.djangoproject.com/en/5.0/howto/custom-model-fields/">https://docs.djangoproject.com/en/5.0/howto/custom-model-fields/</a></p>
+<p>The field would take a <code class="code highlight python docutils literal highlight-python"><span class="n">numpy</span> <span class="n">matrix</span></code>, then :</p>
+<ul class="simple">
+<li><p>retrieve the matrix shape : <code class="code highlight python docutils literal highlight-python"><span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span></code></p></li>
+<li><p>convert the shape into a binary string : <code class="code highlight python docutils literal highlight-python"><span class="n">shape</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;&gt;II&quot;</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span></code></p></li>
+<li><p>convert the matrix into a binary string and prepend the shape to it : <code class="code highlight python docutils literal highlight-python"><span class="n">encoded_matrix</span> <span class="o">=</span> <span class="n">shape</span> <span class="o">+</span> <span class="n">value</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span></code></p></li>
+</ul>
+<p>To reduce the matrix size and enhance performance I changed the numpy matrix data type to be <code class="code highlight python docutils literal highlight-python"><span class="n">Uint32</span></code> instead of <code class="code highlight python docutils literal highlight-python"><span class="n">Double</span></code>,
+which <strong>divided the overall matrix weight by two</strong> !</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>matrix/fields.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span> <span class="nc">NumpyMatrixField</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">BinaryField</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dump a numpy arrays to bytes and store it in a Postgres BinaryField.</span>
+<span class="sd">    Matrix shape is converted to a binary string</span>
+<span class="sd">    and stored alongside the matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;A field to save Numpy NxP arrays into a postgres BinaryField&quot;</span>
+
+    <span class="c1"># Create a bytes string containing matrix shape.</span>
+    <span class="c1"># &#39;&gt;II&#39; is the encoding of the value</span>
+    <span class="c1">#    `&gt;` BigIndian byte order is used</span>
+    <span class="c1">#    `II` means that the byte string will contains two integers ( height / width )</span>
+    <span class="n">_STRUCT_MATRIX_SHAPE</span> <span class="o">=</span> <span class="s2">&quot;&gt;II&quot;</span>
+
+    <span class="n">MATRIX_DTYPE</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint32</span>
+
+    <span class="k">def</span> <span class="nf">get_db_prep_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transform numpy array into a binary string in order to store it in a BinaryField.</span>
+<span class="sd">        Array&#39;s shape is prepended to the binary string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span>
+        <span class="c1"># create a binary string containing the matrix shape</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_STRUCT_MATRIX_SHAPE</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">encoded_matrix</span> <span class="o">=</span> <span class="n">shape</span> <span class="o">+</span> <span class="n">value</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">MATRIX_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_db_prep_value</span><span class="p">(</span><span class="n">encoded_matrix</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transforms the stored binary string in the database into a numpy.ndarray.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Retrieve matrix shape from binary string</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_STRUCT_MATRIX_SHAPE</span><span class="p">,</span> <span class="n">value</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
+        <span class="c1"># Retrieve matrix view from buffer and take ownership of its copy</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">MATRIX_DTYPE</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">from_db_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">MATRIX_DTYPE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This field allowed the following database modelization :</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>matrix/models.py</code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">)</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">DecimalField</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">DecimalField</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">MATRIX_CHOICES</span><span class="p">,</span> <span class="o">....</span><span class="p">)</span>
+    <span class="n">weekday</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">DAYS_OF_WEEK</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">NumpyMatrixField</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And could be used as follows :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">matrix</span> <span class="o">=</span> <span class="n">Matrix</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">matrix</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="n">matrix</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Which is very intuitive and easy for other developers.</p>
+<section id="performances-benefits">
+<h3>Performances benefits<a class="headerlink" href="#performances-benefits" title="Link to this heading">¶</a></h3>
+<p>We gained several orders of magnitude of performance, this modelization allowed us to scale to matrices from a maximum of
+<strong>800 x 800 to 4000 x 4000</strong> while staying <strong>under 200ms</strong> to retrieve a single matrix and around 400ms for an update.</p>
+<p><em>One could add a Redis or Memcached cache on top of that to gain even more performances.</em>
+</p>
+</section>
+<section id="conclusion">
+<h3>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">¶</a></h3>
+<p>In this post we saw how to create a custom field to store large numpy matrices and get decent performances for pretty “large”
+matrices.</p>
+</section>
+</section>
 </section>
 
 
