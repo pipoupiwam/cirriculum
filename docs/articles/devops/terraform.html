@@ -13,7 +13,7 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Cloud Init &amp; Terraform" href="cloud_init.html" />
+    <link rel="next" title="Create an AWS ami with Packer" href="packer_aws_ami.html" />
     <link rel="prev" title="DevOps" href="index.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -71,9 +71,353 @@
             
   <section id="terraform">
 <h1>Terraform<a class="headerlink" href="#terraform" title="Link to this heading">¶</a></h1>
-<p>infrastructure as code</p>
-<p>Terraform setup</p>
-<p>cloud init</p>
+<p>Software engineers are problem solvers, our everyday job is to solve problems, but what’s a solution to a problem if nobody can use it ?</p>
+<p>Lets talk about <code class="code highlight bash docutils literal highlight-bash">infrastructure<span class="w"> </span>as<span class="w"> </span>code</code> and deploy our solution using <code class="code highlight bash docutils literal highlight-bash">terraform</code>!</p>
+<p>Terraform is the main infrastructure as code framework out there : <a class="reference external" href="https://developer.hashicorp.com/terraform">https://developer.hashicorp.com/terraform</a></p>
+<p>Lets use terraform to setup a basic webserver infrastructure on <strong>Amazon Web Service</strong> ( AWS )</p>
+<section id="infrastructure-as-code">
+<h2>Infrastructure As Code<a class="headerlink" href="#infrastructure-as-code" title="Link to this heading">¶</a></h2>
+<p>In my developer experience, deploying my code to production was always painful :</p>
+<ul class="simple">
+<li><p>Each deployment was performed manually on a linux server</p></li>
+<li><p>System dependency management was a mess and often achieved by “trial and error”</p></li>
+<li><p>The server configuration was not reproducible</p></li>
+<li><p>Infrastructure configuration was made manually using web interfaces</p></li>
+<li><p>Project iterations inevitably caused the infrastructure to evolve, previously installed packages caused bugs and configuration issues…</p></li>
+</ul>
+<p><strong>Infrastructure as code</strong> solve these issues, it allows us developers to <strong>code the infrastructure</strong> we need.</p>
+<p>The main benefits are :</p>
+<ul class="simple">
+<li><p>Infrastructure is described as code</p></li>
+<li><p>Infrastructure is versioned ( using git ), tests can be performed, code can be reviewed</p></li>
+<li><p>Infrastructure can be rolled back !</p></li>
+</ul>
+<p>Disadvantages :</p>
+<ul class="simple">
+<li><p>A new programming language to learn</p></li>
+</ul>
+<section id="terraform-installation">
+<h3>Terraform Installation<a class="headerlink" href="#terraform-installation" title="Link to this heading">¶</a></h3>
+<p>Read this article to install terraform : <a class="reference internal" href="terraform_install.html"><span class="doc">Terraform &amp; AWS-CLI installation</span></a></p>
+</section>
+</section>
+<section id="target-infrastructure">
+<h2>Target infrastructure<a class="headerlink" href="#target-infrastructure" title="Link to this heading">¶</a></h2>
+<p>Our infrastructure will be composer of :</p>
+<ul class="simple">
+<li><p>A <code class="code highlight bash docutils literal highlight-bash">VPC</code> ( Virtual Private Cloud ) to “organize” our infrastructure</p></li>
+<li><p>A <code class="code highlight bash docutils literal highlight-bash">Linux<span class="w"> </span>EC2<span class="w"> </span>Instance</code> to host the code of our project</p></li>
+<li><p>An <code class="code highlight bash docutils literal highlight-bash">RDS<span class="w"> </span>Postgres</code> database</p></li>
+</ul>
+<img alt="terraform infrastructure" src="../../_images/terraform_infrastructure.jpg" />
+<section id="setup-project">
+<h3>Setup project<a class="headerlink" href="#setup-project" title="Link to this heading">¶</a></h3>
+<p>Assuming you have the following project organization :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>project/
+<span class="w">    </span>app/
+<span class="w">    </span>requirements.txt
+<span class="w">    </span>...<span class="w"> </span>other<span class="w"> </span>files
+</pre></div>
+</div>
+<p>We will create an <code class="code highlight bash docutils literal highlight-bash">infrastructure</code> folder for our terraform scripts</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>project/
+<span class="w">    </span>app/
+<span class="w">    </span>requirements.txt
+<span class="w">    </span>infrastructure/
+<span class="w">        </span>terraform/
+<span class="w">            </span>main.tf
+<span class="w">            </span>outputs.tf
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="code highlight bash docutils literal highlight-bash">main.tf</code> contains the terraform code that describes the infrastructure</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">outputs.tf</code> contains the variables we want to print post build e.g: instance IP, database address etc…</p></li>
+</ul>
+</section>
+<section id="terraform-init">
+<h3>Terraform init<a class="headerlink" href="#terraform-init" title="Link to this heading">¶</a></h3>
+<p>To start developing our infrastructure we need to :</p>
+<ul class="simple">
+<li><p>Specify a terraform version to use.</p></li>
+<li><p>Select a cloud provider to deploy the infrastructure to, <code class="code highlight bash docutils literal highlight-bash">AWS</code> in our case. Terraform is compatible with all major cloud providers : AWS, GCP, Azure …</p></li>
+</ul>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="nb">terraform</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">required_providers</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="na">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/aws&quot;</span>
+<span class="w">            </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;~&gt; 5.0&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="na">required_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 1.7.0&quot;</span>
+<span class="p">}</span>
+
+<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;aws&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">region</span><span class="w">  </span><span class="o">=</span><span class="w">  </span><span class="s2">&quot;eu-central-1&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Then init the terraform environment with the <code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>init</code> command</p>
+<p><code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>init</code> will setup our terraform environment and download the plugins used for our infrastructure.</p>
+</section>
+<section id="vpc-virtual-private-cloud">
+<h3>VPC : Virtual Private Cloud<a class="headerlink" href="#vpc-virtual-private-cloud" title="Link to this heading">¶</a></h3>
+<p>Our project will be deployed inside a <code class="code highlight bash docutils literal highlight-bash">VPC</code> ( <strong>Virtual Private Cloud</strong> ) , it will be composed of :</p>
+<ul class="simple">
+<li><p><strong>One public subnet</strong> : The instance that runs our project will live inside this subnet. It will be accessible from the internet by SSH and HTTP/HTTPS.</p></li>
+<li><p><strong>Two private subnets</strong> : Our RDS database instances will live inside a <strong>single subnet</strong> but <code class="code highlight bash docutils literal highlight-bash">AWS<span class="w"> </span>RDS</code> requires a second one in case we want to convert the database into a multi-az deployment later on.</p></li>
+</ul>
+<p>Resources inside private subnets are accessible from within the VPC by other resources, they are not accessible from the internet.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vpc&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;terraform-aws-modules/vpc/aws&quot;</span>
+
+<span class="w">    </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;padam-av-vpc&quot;</span>
+<span class="w">    </span><span class="na">cidr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10.0.0.0/16&quot;</span>
+
+<span class="w">    </span><span class="na">azs</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;eu-central-1a&quot;, &quot;eu-central-1b&quot;</span><span class="p">]</span>
+
+<span class="w">    </span><span class="na">public_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;10.0.1.0/24&quot;</span><span class="p">]</span>
+<span class="c1">    # private subnets used by RDS postgres subnet group</span>
+<span class="w">    </span><span class="na">private_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;10.0.101.0/24&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;10.0.102.0/24&quot;</span>
+<span class="w">    </span><span class="p">]</span>
+
+<span class="w">    </span><span class="na">enable_dns_support</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">    </span><span class="na">enable_dns_hostnames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+
+<span class="w">    </span><span class="nb">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">Name</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span>
+<span class="w">        </span><span class="na">Terraform</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<span class="w">        </span><span class="na">Environment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">terraform.workspace</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>After edition we can check our code syntax using the <code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>validate</code> command.</p>
+<p>Then we will need to call <code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>init</code> in order to install the VPC module.</p>
+</section>
+<section id="security-groups">
+<h3>Security groups<a class="headerlink" href="#security-groups" title="Link to this heading">¶</a></h3>
+<p>Security groups let us manage the incoming traffic to our instance.</p>
+<p>For our project we need to open several ports :</p>
+<ul class="simple">
+<li><p><code class="code highlight bash docutils literal highlight-bash"><span class="m">22</span></code> for SSH</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash"><span class="m">80</span></code> for HTTP</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash"><span class="m">443</span></code> for HTTPS</p></li>
+</ul>
+<p>We will assign our <code class="code highlight bash docutils literal highlight-bash">SG</code> ( security group ) to our VPC.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;project-sg&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;My-project&quot;</span>
+<span class="w">    </span><span class="na">vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.vpc.vpc_id</span><span class="c1">  # our VPC id</span>
+
+<span class="c1">    // Allow incoming SSH</span>
+<span class="w">    </span><span class="nb">ingress</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">from_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">22</span>
+<span class="w">        </span><span class="na">protocol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">        </span><span class="na">to_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">22</span>
+<span class="w">        </span><span class="na">cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="c1">    // Allow incoming HTTP</span>
+<span class="w">    </span><span class="nb">ingress</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">from_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">80</span>
+<span class="w">        </span><span class="na">protocol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">        </span><span class="na">to_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">80</span>
+<span class="w">        </span><span class="na">cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="c1">    // Allow incoming HTTPS</span>
+<span class="w">    </span><span class="nb">ingress</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">from_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">443</span>
+<span class="w">        </span><span class="na">protocol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">        </span><span class="na">to_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">443</span>
+<span class="w">        </span><span class="na">cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="c1">    // allow outgoing traffic</span>
+<span class="w">    </span><span class="nb">egress</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">from_port</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
+<span class="w">        </span><span class="na">to_port</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
+<span class="w">        </span><span class="na">protocol</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;-1&quot;</span>
+<span class="w">        </span><span class="na">cidr_blocks</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">Name</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;My project&quot;</span>
+<span class="w">        </span><span class="na">Terraform</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<span class="w">        </span><span class="na">Environment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">terraform.workspace</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="database">
+<h3>Database<a class="headerlink" href="#database" title="Link to this heading">¶</a></h3>
+<p>To create our database we will first need to create a subnet group. As said previously, even if we create a <code class="code highlight bash docutils literal highlight-bash">single-az</code>
+( availability zone ) database ( no replication ) we still need to create two subnets, this is required by AWS in order
+to allow for a future migration into a <code class="code highlight bash docutils literal highlight-bash">multi-az</code>.</p>
+<p>These subnets being private, <strong>our database instance will only be reachable from within the VPC</strong></p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_db_subnet_group&quot;</span><span class="w"> </span><span class="nv">&quot;db-subnet-group&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">subnet_ids</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="nf">element</span><span class="p">(</span><span class="nv">module.vpc.private_subnets</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="p">),</span>
+<span class="w">        </span><span class="nf">element</span><span class="p">(</span><span class="nv">module.vpc.private_subnets</span><span class="p">,</span><span class="w"> </span><span class="m">2</span><span class="p">),</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Then we will create a postgres database for our project :</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_db_instance&quot;</span><span class="w"> </span><span class="nv">&quot;project-db&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;postgres&quot;</span>
+<span class="w">    </span><span class="na">allocated_storage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<span class="w">    </span><span class="na">engine_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;12.7&quot;</span>
+<span class="w">    </span><span class="na">instance_class</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;db.t3.small&quot;</span>
+
+<span class="w">    </span><span class="na">db_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-project-db&quot;</span>
+<span class="w">    </span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;postgres&quot;</span>
+<span class="w">    </span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;password&quot;</span><span class="c1">  # Change your password !</span>
+
+<span class="w">    </span><span class="na">skip_final_snapshot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span><span class="c1">   # Change to false in production</span>
+<span class="w">    </span><span class="na">deletion_protection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span><span class="c1">  # Change to true in production</span>
+
+<span class="w">    </span><span class="na">db_subnet_group_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_db_subnet_group.db-subnet-group.name</span>
+
+<span class="w">    </span><span class="nb">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">Name</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;My-project-db&quot;</span>
+<span class="w">        </span><span class="na">Terraform</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<span class="w">        </span><span class="na">Environment</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="nv">terraform.workspace</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="ami-amazon-machine-image">
+<h3>AMI : Amazon Machine Image<a class="headerlink" href="#ami-amazon-machine-image" title="Link to this heading">¶</a></h3>
+<p>To create a linux instance we will need to select an AMI to run on it.</p>
+<p>An AMI is a preconfigured linux distribution.</p>
+<p><strong>For the purposes of this tutorial an of the shelf Ubuntu AMI will be used.</strong> Read this article to  <a class="reference internal" href="packer_aws_ami.html"><span class="doc">Create an AWS ami with Packer</span></a></p>
+<p>The following code filters for the <strong>most recent</strong> <code class="code highlight bash docutils literal highlight-bash">ubuntu-jammy-22.04</code> instance of the canonical account ( 099720109477 )</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_ami&quot;</span><span class="w"> </span><span class="nv">&quot;ubuntu22&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">most_recent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">    </span><span class="na">owners</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;099720109477&quot;</span><span class="p">]</span><span class="c1">  # canonical</span>
+
+<span class="w">    </span><span class="nb">filter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">name</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;name&quot;</span>
+<span class="w">        </span><span class="na">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-*&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">filter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">name</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;virtualization-type&quot;</span>
+<span class="w">        </span><span class="na">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;hvm&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>If you created your own AMI, then you could rewrite the AMI filter as follows :</p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_ami&quot;</span><span class="w"> </span><span class="nv">&quot;custom-ubuntu22&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">most_recent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">    </span><span class="na">owners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;YOUR_AWS_ACCOUNT_ID&quot;</span><span class="p">]</span>
+
+<span class="w">    </span><span class="nb">filter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;name&quot;</span>
+<span class="w">        </span><span class="na">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;YOUR_AMI_NAME_*&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="instance">
+<h3>Instance<a class="headerlink" href="#instance" title="Link to this heading">¶</a></h3>
+<p>Finally we can create an instance using the selected AMI.</p>
+<p>To connect to your instance you will need to create an SSH key : <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html#having-ec2-create-your-key-pair">https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html#having-ec2-create-your-key-pair</a></p>
+<p>AWS instances are assigned a “random” IP address upon creation. If you <strong>recreate your instance</strong> ( in order to change the AMI )
+<strong>you will lose the previously assigned IP address</strong></p>
+<p>To assign and keep the same IP address we will set <code class="code highlight bash docutils literal highlight-bash"><span class="nv">associate_public_ip_address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span></code></p>
+<p>Our instance will run inside the public subnet of our VPC, it will be reachable from the internet through the allowed ports
+defined in our security group.</p>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/main.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_instance&quot;</span><span class="w"> </span><span class="nv">&quot;project-instance&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">ami</span><span class="w">                         </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_ami.ubuntu22.id</span>
+<span class="w">    </span><span class="na">instance_type</span><span class="w">               </span><span class="o">=</span><span class="w"> </span><span class="nv">local.workspace</span><span class="p">[</span><span class="s2">&quot;instance_type&quot;</span><span class="p">]</span>
+
+<span class="w">    </span><span class="na">vpc_security_group_ids</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="nv">aws_security_group.project-sg.id</span><span class="p">,</span><span class="c1">  # our Security group with ports 22, 80, 443 open</span>
+<span class="w">        </span><span class="nv">module.vpc.default_security_group_id</span><span class="p">,</span><span class="c1">  # default security group created by AWS</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">    </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">element</span><span class="p">(</span><span class="nv">module.vpc.public_subnets</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="c1">  # public subnet of the VPC</span>
+
+<span class="w">    </span><span class="na">key_name</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-project-ssh-key&quot;</span>
+<span class="w">    </span><span class="na">associate_public_ip_address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+
+<span class="w">    </span><span class="nb">root_block_device</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">delete_on_termination</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">        </span><span class="na">volume_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gp2&quot;</span>
+<span class="w">        </span><span class="na">volume_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">20</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">Name</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;project-instance&quot;</span>
+<span class="w">        </span><span class="na">Terraform</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<span class="w">        </span><span class="na">Environment</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="nv">terraform.workspace</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="outputs-tf">
+<h3>outputs.tf<a class="headerlink" href="#outputs-tf" title="Link to this heading">¶</a></h3>
+<p><code class="code highlight bash docutils literal highlight-bash">outputs.tf</code> allows to define outputs to be printed by terraform after <code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>apply</code></p>
+<p>We will output :</p>
+<ul class="simple">
+<li><p>our <strong>instance public ip</strong>, to connect by SSH or for a DNS record</p></li>
+<li><p>our <strong>database address</strong>, to connect to our database from our instance</p></li>
+</ul>
+<p><code class="code highlight bash docutils literal highlight-bash"><span class="p">&amp;</span>&gt;<span class="w"> </span>cat<span class="w"> </span>project/infrastructure/terraform/outputs.tf</code></p>
+<div class="highlight-terraform notranslate"><div class="highlight"><pre><span></span><span class="kr">output</span><span class="w"> </span><span class="nv">&quot;instance_ip&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_instance.project-instance.public_ip</span>
+<span class="p">}</span>
+
+<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;database_address&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_db_instance.project-db.address</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="deployment">
+<h3>Deployment<a class="headerlink" href="#deployment" title="Link to this heading">¶</a></h3>
+<p>Now that our code is ready we can deploy our infrastructure :</p>
+<p>Run the following commands :</p>
+<ul class="simple">
+<li><p><code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>validate</code> to inspect for errors in our <code class="code highlight bash docutils literal highlight-bash">main.tf</code> file</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>plan</code> to view the list of resources that will be created and edited by terraform</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>apply</code> to deploy the infrastructure.</p></li>
+</ul>
+<p><code class="code highlight bash docutils literal highlight-bash">terraform<span class="w"> </span>apply</code> will create the infrastructure and output the <code class="code highlight bash docutils literal highlight-bash">instance_ip</code> and <code class="code highlight bash docutils literal highlight-bash">database_address</code> as defined in <code class="code highlight bash docutils literal highlight-bash">outputs.tf</code></p>
+<p>Et Voilà ! You got an ubuntu instance that you can connect to using SSH, pull your git repo,
+create a connection to the database and start your webserver.</p>
+</section>
+<section id="what-s-next">
+<h3>What’s next ?<a class="headerlink" href="#what-s-next" title="Link to this heading">¶</a></h3>
+<p>The infrastructure described in this article if very limited, we could make it more resilient by autoscaling the
+instance according to resources usage.</p>
+<p>The connection to the database is manual : you need to connect to the instance to specify the database connection string.
+This process can be automated using instance tags.</p>
+<p>The instance lacks a DNS record, we could create one using terraform.</p>
+<p>As always there are tons of enhancements that could be done,
+but nevertheless our infrastructure is now <strong>described as CODE</strong> and can be enhanced in future revisions.</p>
+</section>
+<section id="conclusions">
+<h3>Conclusions<a class="headerlink" href="#conclusions" title="Link to this heading">¶</a></h3>
+<p>We deployed a ( very ) basic infrastructure to host a web server using terraform.</p>
+<p>The infrastructure is <strong>managed by terraform</strong>, <strong>stored in a git repository</strong> and can easily be modified to suit our evolving needs,
+we can change the database instance type to increase performance, change disk allocations, add additional instances, etc…</p>
+</section>
+</section>
 </section>
 
 

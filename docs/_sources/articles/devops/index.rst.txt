@@ -7,7 +7,9 @@ Articles about DevOps
     :maxdepth: 2
 
     terraform
+    packer_aws_ami
     cloud_init
+    terraform_workspace
     drone_ci
 
 

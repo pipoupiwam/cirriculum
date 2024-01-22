@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Terraform &amp; AWS-CLI installation &#8212; Mikhail Zaitsev 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=28c8e701" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/images/logo.jpg" alt="Logo"/>
+    
+      
+    <h1 class="logo logo-name" style="font-size: 23px">Mikhail Zaitsev</h1>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb"><b>Senior Python / Django </b> developer, <b>devOps</b> & <b>Tech team lead.</b></p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=pipoupiwam&repo=cirriculum&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">DevOps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_django/index.html">Python / Django</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fast_api/index.html">Fast API</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="terraform-aws-cli-installation">
+<h1>Terraform &amp; AWS-CLI installation<a class="headerlink" href="#terraform-aws-cli-installation" title="Link to this heading">¶</a></h1>
+<p>To work with terraform on AWS we will need to install terraform itself and AWS-CLI to manage our AWS credentials.</p>
+<p><strong>Terraform</strong></p>
+<p>I recommend to install terraform using a precompiled binary for your system, I often encounter terraform scripts
+developed with old version and not compatible with the latest release. Using precompiled binaries allows to easily setup
+a working development environment.</p>
+<p>Chose a version to install and download the appropriate binary for your system :  <a class="reference external" href="https://developer.hashicorp.com/terraform/install">https://developer.hashicorp.com/terraform/install</a></p>
+<p>Unzip the folder containing the binary. Then copy it into <code class="code highlight bash docutils literal highlight-bash">/usr/bin</code> to make it available system wide. Do not forget
+to rename the binary to add a version number.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>unzip<span class="w"> </span>terraform_1.7.0_linux_amd64.zip
+mv<span class="w"> </span>terraform<span class="w"> </span>/usr/bin/terraform170
+</pre></div>
+</div>
+<p><strong>AWS CLI</strong></p>
+<p>AWS CLI Installation : <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html</a></p>
+<p>We will use <code class="code highlight bash docutils literal highlight-bash">Amazon<span class="w"> </span>Web<span class="w"> </span>Services</code> to run our infrastructure, <code class="code highlight bash docutils literal highlight-bash">terraform</code> needs <code class="code highlight bash docutils literal highlight-bash">AWS</code> API credentials to
+access our AWS account.</p>
+<p>To install the <cite>AWS CLI</cite>, run the following commands :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>curl<span class="w"> </span><span class="s2">&quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;awscliv2.zip&quot;</span>
+unzip<span class="w"> </span>awscliv2.zip
+sudo<span class="w"> </span>./aws/install
+</pre></div>
+</div>
+<p>Then add your AWS credentials in  <code class="code highlight bash docutils literal highlight-bash">~/.aws/credentials</code> :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>default<span class="o">]</span>
+<span class="nv">aws_access_key_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>AAWDAWDAWDAWDAWDAWDD
+<span class="nv">aws_secret_access_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>awd123awd123awd123awd123awd123awd123awd1
+</pre></div>
+</div>
+<p>You can generate aws access keys in the aws web console.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+
+
+    
+
+    
+  </body>
+</html>
