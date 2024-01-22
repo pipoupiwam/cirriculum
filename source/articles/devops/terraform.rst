@@ -117,6 +117,7 @@ To start developing our infrastructure we need to :
 Then init the terraform environment with the :b:`terraform init` command
 
 .. code-block:: bash
+
     &> terraform init
     Initializing the backend...
     ...
