@@ -7,11 +7,12 @@ Terraform
 
 Software engineers are problem solvers, our everyday job is to solve problems, but what's a solution to a problem if nobody can use it ?
 
-Lets talk about :b:`infrastructure as code` and deploy our solution using :b:`terraform`!
+Lets use terraform to setup a basic webserver infrastructure on **Amazon Web Service** ( AWS )
 
 Terraform is the main infrastructure as code framework out there : https://developer.hashicorp.com/terraform
 
-Lets use terraform to setup a basic webserver infrastructure on **Amazon Web Service** ( AWS )
+( pulumi is another infrastructure as code framework, but I have yet to test it for my deployments :  https://www.pulumi.com/ )
+
 
 Infrastructure As Code
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,7 +200,7 @@ We will assign our :b:`SG` ( security group ) to our VPC.
             from_port = 22
             protocol = "tcp"
             to_port = 22
-            cidr_blocks = ["0.0.0.0/0"]
+            cidr_blocks = ["0.0.0.0/0"]  # SSH should be restricted to your home or company IP
         }
 
         // Allow incoming HTTP
