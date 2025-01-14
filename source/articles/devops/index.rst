@@ -11,7 +11,7 @@ Articles about DevOps
     cloud_init
     terraform_workspace
     drone_ci
-
+    terraform_install
 
 
 
