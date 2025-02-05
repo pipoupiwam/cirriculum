@@ -69,16 +69,26 @@
             
   <section id="resume">
 <h1>Resume<a class="headerlink" href="#resume" title="Link to this heading">¶</a></h1>
-<p>As a highly skilled <strong>Python Django</strong> Software Engineer with extensive experience in <strong>DevOps and Amazon Web Services</strong>, I am dedicated to delivering innovative solutions by leveraging my expertise in software development. With a proven track record of leading tech teams, I collaborate with stakeholders, analyze customer requirements, and design scalable and efficient solutions.</p>
+<p>As an experienced Freelance <strong>Python Django Developer</strong> with a deep expertise in <strong>DevOps</strong> and <strong>Amazon Web Services</strong>,
+I specialize in delivering high-quality, scalable software solutions tailored to your business needs.</p>
+<ul class="simple">
+<li><p><strong>Software Development</strong> : Application development with Python and Django to meet your unique requirements.</p></li>
+<li><p><strong>DevOps Consulting</strong>: Optimizing your development and deployment processes to enhance efficiency and reliability.</p></li>
+<li><p><strong>Cloud Solutions</strong>: Build robust, scalable, and secure cloud-based solutions.</p></li>
+<li><p><strong>Performance Optimization</strong>: Enhancing the speed and efficiency of your existing systems to improve user experience and reduce costs.</p></li>
+<li><p><strong>Technical Leadership</strong>: Providing guidance and mentorship to your development teams to ensure best practices and successful project delivery.</p></li>
+</ul>
+<p>With a proven track record of delivering successful projects, I am committed to understanding your goals and collaborating closely with you to achieve outstanding results.</p>
 <section id="tech-skills">
 <h2>Tech Skills<a class="headerlink" href="#tech-skills" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><strong>Python</strong>: Asyncio, Requests, Websockets, Numpy, Redis, PyTest</p></li>
-<li><p><strong>Django</strong>: Django Rest Framework, Celery / Rqueu, Caching</p></li>
+<li><p><strong>Django</strong>: Django Rest Framework, Celery / rQueu, Caching, Admin, Forms, Django-Filters, <strong>Swagger/OpenAPI</strong></p></li>
 <li><p><strong>Databases</strong>: Postgres (Database modeling, performance monitoring), Redis (Caching, Timeseries, Stream processing, Pub/Sub, optimized data modeling)</p></li>
 <li><p><strong>Cloud</strong>: Amazon Web Services (EC2, RDS, S3, Autoscaling, IAM, Security Groups, Boto APIs), AWS</p></li>
 <li><p><strong>DevOps</strong>: Nginx, Gunicorn, Supervisor, Systemctl, Cron, Terraform / Packer (Infrastructure as code, AMI generation), Docker (Image creation), CI/CD (Testing &amp; Automation pipelines)</p></li>
 <li><p><strong>Web</strong>: JavaScript, HTML, CSS, Jinja templates, Bootstrap</p></li>
+<li><p><strong>Networking</strong> : Pub/Sub, Stream processing, AWS VPC/SG/Subnets</p></li>
 <li><p><strong>Version Control</strong>: Git (interactive rebase, code reviews)</p></li>
 </ul>
 </section>
@@ -93,58 +103,234 @@
 </section>
 <section id="experiences">
 <h2>Experiences<a class="headerlink" href="#experiences" title="Link to this heading">¶</a></h2>
-<section id="freelance-developer">
-<h3>[2024 - 2025] Freelance Developer<a class="headerlink" href="#freelance-developer" title="Link to this heading">¶</a></h3>
-<p>Developed a patient platform for logging audio symptoms. Converted audio logs to text using speech-to-text technology and extracted 15 key data points for daily logs, storing them in a database. Utilized Django and Python for the backend, and Bootstrap, HTML, CSS, and JavaScript for the frontend.</p>
-<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, <strong>LangChain</strong>, <strong>AWS</strong>, <strong>Mistral AI</strong>, <strong>OpenAI</strong>, <strong>Bootstrap</strong>, <strong>HTML</strong>, <strong>CSS</strong>, <strong>JavaScript</strong></p>
+<section id="dryeye-research-freelance-developer">
+<h3>[2024 - 2025] Dryeye-research : Freelance Developer<a class="headerlink" href="#dryeye-research-freelance-developer" title="Link to this heading">¶</a></h3>
+<p>At Dryeye-research, I developed a platform from scratch to collect and analyze daily audio logs from patients with dry eye disease.
+The goal was to identify daily behaviors that could trigger symptoms using AI.</p>
+<p>I designed, developed, and deployed the platform based on business requirements.
+The audio logs were recorded using JavaScript and uploaded to the backend via a REST API.
+A background task then performed speech-to-text conversion using a local instance of Whisper.
+The extracted text was processed by a local Large Language Model (LLM) to extract relevant features such as eye condition, diet, and screen time.
+Weekly, the extracted data was analyzed to identify recurring patterns.</p>
+<p>To ensure data privacy, AI models were executed asynchronously on dedicated hardware, with synchronization handled through APIs.</p>
+<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, <strong>DRF</strong>, <strong>LangChain</strong>, <strong>AWS</strong>, <strong>Mistral AI</strong>, <strong>OpenAI</strong>, <strong>Bootstrap</strong>, <strong>HTML</strong>, <strong>CSS</strong>, <strong>JavaScript</strong></p>
 </section>
-<section id="freelance-python-and-ai-developer">
-<h3>[2024] Freelance Python and AI Developer<a class="headerlink" href="#freelance-python-and-ai-developer" title="Link to this heading">¶</a></h3>
-<p>Developed an automated solution to tag news articles using LangChain and Python. Structured the output for database ingestion and utilized ChromaDB to group similar tags by meaning, ensuring efficient data management.</p>
+<section id="mavielocale-freelance-python-and-ai-developer">
+<h3>[2024] MaVieLocale : Freelance Python and AI Developer<a class="headerlink" href="#mavielocale-freelance-python-and-ai-developer" title="Link to this heading">¶</a></h3>
+<p>MaVieLocale aggregates local points of interests ( museums, monuments … )  and events ( concerts, expositions, festivals … ) into a single application.
+It faced a challenge in providing a performant search engine based on tags.</p>
+<p>I developed an automated tagging engine using langchain and a LLM.
+Due to the variety ( or randomness ) of generated tags, I used a vectorial database ( ChromaDB ) to link generated tags with business defined tags.
+Example : Searching for a “culture” would return results containing “exposition”, “museum”, “medieval”.
+The related tags were sorted by relevant according to the weights assigned by the model.
+I delivered two services, one for tagging, another one for linking business and generated tags.</p>
+<p>At MaVieLocale, I worked on an application that aggregates local points of interest
+(such as museums and monuments) and events (like concerts, exhibitions, and festivals).
+The application faced a challenge in providing an efficient search engine based on tags.</p>
+<p>To address this, I developed an automated tagging engine using LangChain and a Large Language Model (LLM).
+Given the diversity of generated tags, I implemented a vector database (ChromaDB) to map these tags to predefined business categories.
+For example, searching for “culture” would return results containing tags like “exhibition,” “museum,” and “medieval.”
+The related tags were sorted by relevance based on weights assigned by the model.</p>
+<p>I delivered two key services: one for automated tagging and another for linking business-defined tags with generated tags.</p>
 <p><strong>Technologies</strong>: <strong>Python</strong>, <strong>LangChain</strong>, <strong>ChromaDB</strong></p>
 </section>
-<section id="padam-av-python-developer">
-<h3>[2022 - 2023] Padam AV : Python Developer<a class="headerlink" href="#padam-av-python-developer" title="Link to this heading">¶</a></h3>
-<p>Padam AV focuses on integrating autonomous vehicles into a DRT system, acting as a virtual driver giving orders to autonomous vehicles and monitoring their progress. As the single developer, I designed the project from scratch, set up a scalable architecture, developed the MVP, and recruited a small team of developers to continue development.</p>
+<section id="padam-av-freelance-python-developer">
+<h3>[2022 - 2023] Padam AV : Freelance Python Developer<a class="headerlink" href="#padam-av-freelance-python-developer" title="Link to this heading">¶</a></h3>
+<p>At Padam AV, I integrated autonomous vehicles into a Mobility as a Service (MaaS) system,
+acting as a virtual driver to issue commands to autonomous vehicles and monitor their progress.
+As the sole developer, I designed the project from scratch, established a scalable architecture, developed the MVP,
+and later recruited a small team of developers to continue development.</p>
+<p>Key Projects and Contributions:</p>
+<ul class="simple">
+<li><p><strong>WebSocket Microservice</strong>: Developed a Python WebSocket microservice to consume telemetry data from autonomous vehicles.
+This data was restructured into a proprietary format to standardize inputs from various manufacturers.</p></li>
+<li><p><strong>Data Transformation and Distribution</strong>: Transformed data was sent to a Redis pub/sub system, connecting multiple microservices:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>A dedicated microservice for saving data into the database, ensuring a single point of responsibility for database updates.</p></li>
+<li><p>A WebSocket server that published to various channels, enabling real-time frontend updates for vehicle position, status, and other critical information.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Frontend Development</strong>: Developed the frontend using Django with JavaScript to handle WebSocket data, providing real-time updates to users.</p></li>
+<li><p><strong>Roadmap Management</strong>: Created a microservice to pull roadmaps from map services based on differential timestamps,
+storing them in a Redis cache to ensure up-to-date information without database overhead.</p></li>
+<li><p><strong>Decision-Making Graph</strong>: Implemented an asynchronous task that ran every few seconds to execute a decision-making graph.
+This task evaluated vehicle telemetry changes, such as mission completion, and created new missions as needed for subsequent stops.</p></li>
+</ul>
 <p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, <strong>Websockets</strong>, <strong>Pytest</strong>, <strong>AWS</strong>, Terraform, Asynchronous tasks, Real-time data ingestion</p>
 </section>
 <section id="padam-mobility-tech-team-lead">
 <h3>[2019 - 2022] Padam Mobility : Tech Team Lead<a class="headerlink" href="#padam-mobility-tech-team-lead" title="Link to this heading">¶</a></h3>
-<p>Padam Mobility provides a DRT software suite to transport operators. As a Tech Team Lead, I led the “Operators” team of 8 developers, focusing on the backoffice development of the DRT software.</p>
-<p><strong>Projects</strong>:
-- Developed internal tools to ease setup and reduce the marginal cost of new clients (task automation, quality gates, process design)
-- Created a DRT simulator for territory-wide simulations
-- Refactored the geography database to stabilize code, enhance performance, and add new features
-- Stabilized and redesigned the test suite and CI/CD pipeline
-- Deployed and maintained the ELK suite (ElasticSearch, Logstash, Kibana) as a centralized logging platform
-- Migrated from Python2 to Python3</p>
+<p>At Padam Mobility, I served as a Tech Team Lead for the “Operators” team, comprising 8 developers,
+focusing on the backoffice development of the DRT (Demand-Responsive Transport) software suite for transport operators.</p>
+<p>Key Projects and Contributions:</p>
+<ul class="simple">
+<li><p><strong>DRT Simulator</strong>: Developed a dedicated website using Django to facilitate territory-wide DRT simulations.</p></li>
+</ul>
+<blockquote>
+<div><p>This tool featured a multi-section form allowing users to select a territory, configure its settings,
+and upload various simulation scenarios defined in CSV files.
+Upon launching a simulation, it was executed as a Celery task, with results made available for download post-execution.
+This significantly reduced the need for technical intervention and streamlined the simulation process.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Geography Database Refactoring</strong>: Led a team to analyze and refactor the geography database system, addressing stability and performance issues.</p></li>
+</ul>
+<blockquote>
+<div><p>The existing system stored DRT stops and travel times in separate tables, leading to unstable usage and poor performance,
+especially with large datasets.
+We implemented a geography versioning system to manage future changes,
+such as adding temporary stops or adjusting for roadworks.
+I conducted benchmarks for travel time matrices, accommodating clients’ needs for varying traffic conditions throughout the day and week.
+By centralizing access points, we ensured code stability and achieved significant performance improvements.
+The project’s active phase lasted four months, with all clients migrated within a year.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>CI/CD Pipeline</strong>: Redesigned and stabilized the test suite and CI/CD pipeline, which was initially executed on Jenkins bare metal servers.</p></li>
+</ul>
+<blockquote>
+<div><p>The previous setup often slowed down, especially during peak times, leading to pipeline executions of up to an hour.
+I migrated the pipeline to DroneCI with AWS on-demand infrastructure,
+launching instances to execute new pipelines and utilizing servers with up to 16 cores to expedite execution and reduce costs.
+I optimized test fixtures and setup functions to reuse data or use smaller datasets, further accelerating execution.
+Additionally, I introduced randomized test order execution to detect issues and resolved tests that relied on a dirty database context or poorly performed transactions.
+The dockerized and modular nature of the CI allowed other developers to edit the pipeline in the code, add quality gates, and easily modify project requirements.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>ELK Suite Deployment</strong>: Deployed and maintained the ELK suite (ElasticSearch, Logstash, Kibana) on AWS as a centralized logging platform.</p></li>
+</ul>
+<blockquote>
+<div><p>Initially, each client had a separate ElasticSearch instance, which was inefficient.
+I migrated the logging infrastructure to a mutualized ELK setup, optimizing the Logstash ingestion pipeline with AWS Auto Scaling groups to handle varying log volumes.
+I removed DEBUG logs and other non-essential logs to reduce backend spam.
+Additionally, I managed index creation in ElasticSearch and reviewed backend logs to standardize and enrich them with relevant information.
+The platform was deployed using Terraform, Packer, and Ansible, facilitating updates and testing.
+The final result was a unified logging platform for all clients, enabling comprehensive statistics and reducing logging costs by 50%,
+despite transitioning from bare metal to more expensive cloud servers. The system ingested approximately 2TB of logs over a six-month period.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Padam-OSRM</strong>: Developed a platform using Django and PostGIS to customize OSRM map profiles.</p></li>
+</ul>
+<blockquote>
+<div><p>The platform allowed users to configure map profiles and create polygons with travel time multipliers.
+Once configured, the platform generated an OSRM map Lua profile that connected to the Django database.
+During map creation, OSRM queried the PostGIS database to adjust travel times within defined polygons, enabling custom travel time calibration.
+This tool was also used by the ML team to calibrate travel times based on real ride data.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Internal Tools Development</strong> : Developed a Django command to retrieve anonymized databases from production, facilitating local issue reproduction and feature testing.</p></li>
+</ul>
+<blockquote>
+<div><p>This tool allowed browsing available client databases, selecting them by date, and downloading them into a local PostgreSQL instance.</p>
+<p>Created a web interface to streamline the testing process by selecting available Git branches for the frontend and launching specific versions of the code.</p>
+</div></blockquote>
 <p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, <strong>Django Rest Framework</strong>, <strong>Pytest</strong>, <strong>PostGis</strong>, OSRM, AWS, Terraform, Drone CI, Numpy, Asynchronous tasks, ETL</p>
 </section>
 <section id="avicen-entrepreneurial-project">
 <h3>[2018 - 2019] Avicen : Entrepreneurial Project<a class="headerlink" href="#avicen-entrepreneurial-project" title="Link to this heading">¶</a></h3>
-<p>Avicen provides an edge IoT solution to manage professional vehicle fleets.</p>
-<p><strong>Projects</strong>:
-- Set up an ETL pipeline based on Azure IoT
-- Stored timeseries data in Postgresql TimescaleDB module
-- Developed APIs to consume database data and documented them with Swagger</p>
-<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Azure IoT</strong>, <strong>MQTT</strong>, <strong>TimescaleDB</strong>, <strong>Docker</strong></p>
+<p>Avicen focuses on optimizing fleet management through edge IoT solutions.</p>
+<p>Key Projects and Contributions:</p>
+<ul class="simple">
+<li><p><strong>Edge IoT Data Processing</strong> : Developed an edge IoT solution to process high-frequency data (e.g., 100Hz accelerometer readings) directly on the vehicle.</p></li>
+</ul>
+<blockquote>
+<div><p>A Docker container running Python scripts processed the data locally,
+filtering out irrelevant information and uploading only significant events such as accelerations, decelerations, speed changes.
+The data was uploaded using the MQTT protocol with a queue to ensure reliability, even in cases of 4G errors or missing connections.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>ETL Pipeline with Azure IoT</strong>: Set up an ETL pipeline based on Azure IoT to manage the flow of data from the vehicles to our backend.</p></li>
+</ul>
+<blockquote>
+<div><p>Data was received by a Microsoft MQTT server and dispatched to a queue, where Python workers processed and ingested it into PostgreSQL TimescaleDB.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Timeseries Data Management</strong>: Initially, we used MongoDB for timeseries data, but</p></li>
+</ul>
+<blockquote>
+<div><p>faced challenges in managing two separate databases and linking business data with timeseries data.
+To streamline our operations, we migrated to PostgreSQL with the TimescaleDB module, allowing us to keep all data in one place.
+This change enabled us to leverage Django Rest Framework (DRF) and django-filters for efficient data management and querying.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>API Development and Documentation</strong>: Developed APIs using DRF and django-filters to consume and manage the database data.</p></li>
+</ul>
+<blockquote>
+<div><p>Documented the APIs with Swagger, providing comprehensive documentation for our partners who were responsible for frontend development.</p>
+</div></blockquote>
+<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, Django Rest Framework (DRF), django-filters, Docker, Azure IoT, MQTT, PostgreSQL, TimescaleDB, Swagger</p>
 </section>
 <section id="outscale-python-developer">
 <h3>[2016 - 2017] Outscale : Python Developer<a class="headerlink" href="#outscale-python-developer" title="Link to this heading">¶</a></h3>
 <p>Outscale is a French cloud provider with an API compatible with Amazon Web Services.</p>
-<p><strong>Projects</strong>:
-- Developed internal tools to supervise Virtual Machines maintenance lifecycle
-- Performed integration testing of Outscale APIs to ensure compatibility with AWS</p>
-<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Boto</strong>, <strong>AWS</strong></p>
+<p>Key Projects and Contributions:</p>
+<ul class="simple">
+<li><p><strong>VM Maintenance Supervision Tool</strong>: Developed a tool using internal APIs to manage the maintenance lifecycle of Virtual Machines (VMs).</p></li>
+</ul>
+<blockquote>
+<div><p>This tool listed clusters scheduled for maintenance and retrieved client emails.
+It provided a web interface to list all concerned VMs for a given cluster.
+An OPS team member could initiate personalized, transactional email notifications to clients.
+The tool tracked email statuses in the database and used asynchronous tasks to check VM statuses daily.
+If clients did not perform required actions within 7 days of migration, a ticket was opened in ZenDesk and updated daily until the migration.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Visitor Management System</strong>: Created a Django app to automate the visitor management process for ISO 27001 certification.</p></li>
+</ul>
+<blockquote>
+<div><p>The app connected to the employees’ LDAP server to retrieve the list of employees.
+Visitors used a web interface on an iPad at the entrance to enter their information and select the employee they were visiting.
+The app notified the employee via email and stored visitor data for audit purposes.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>API Integration Testing</strong>: Developed a tool based on OpenAPI specifications of the Outscale APIs.</p></li>
+</ul>
+<blockquote>
+<div><p>This tool read the API specifications, performed queries, and compared the expected outputs.
+It was used by the quality and documentation teams to ensure API compatibility with AWS and to validate API documentation.</p>
+</div></blockquote>
+<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, <strong>Boto</strong>, AWS, OpenAPI, LDAP, ZenDesk</p>
 </section>
 <section id="buffactory-entrepreneurial-project">
-<h3>[2015 - 2016] Buffactory : Entrepreneurial Project<a class="headerlink" href="#buffactory-entrepreneurial-project" title="Link to this heading">¶</a></h3>
-<p>Buffactory allows musicians to collaborate simultaneously on a musical project with a git-like workflow.</p>
-<p><strong>Projects</strong>:
-- Developed the frontend interface
-- Created a client application compatible with Windows and MacOS
-- Synchronized musical files (samples) between clients</p>
-<p><strong>Technologies</strong>: <strong>Python</strong>, <strong>Django</strong>, <strong>PyQT</strong>, <strong>AWS</strong></p>
+<h3>[2014 - 2016] Buffactory : Entrepreneurial Project<a class="headerlink" href="#buffactory-entrepreneurial-project" title="Link to this heading">¶</a></h3>
+<p>At Buffactory, my own startup,
+I aimed to create a “GitHub for music”,  enabling musicians to collaborate simultaneously on musical projects with a git-like workflow.
+This idea was born out of the challenges I faced while collaborating on music projects with musicians in different countries.</p>
+<p>Key Projects and Contributions:</p>
+<ul class="simple">
+<li><p><strong>Frontend Interface</strong>: Developed a web interface that allowed users to create branches and select tracks to be blocked for other collaborators,</p></li>
+</ul>
+<blockquote>
+<div><p>facilitating a structured and version-controlled workflow.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Client Application</strong>: Created a PyQT client compatible with Windows and MacOS.</p></li>
+</ul>
+<blockquote>
+<div><p>This client pulled project changes or new projects locally, downloaded samples, and received updates from other users,
+notifying them to update the project.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>XML Parsing and Project Management</strong>: Developed an XML parser to read and manage Ableton project files.</p></li>
+</ul>
+<blockquote>
+<div><p>This enabled the decomposition and recomposition of projects into individual tracks or stems, allowing for version control and collaboration.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Sample Management</strong>: Implemented a system to extract samples from projects and upload them to the cloud using S3 APIs.</p></li>
+</ul>
+<blockquote>
+<div><p>Samples were converted to optimized formats (e.g., WAV to FLAC) to reduce storage and bandwidth usage.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>Performance Optimization</strong>: Addressed performance issues in the client application by implementing multithreading.</p></li>
+</ul>
+<blockquote>
+<div><p>Used a low-level XML parser to handle large XML files efficiently.</p>
+</div></blockquote>
+<p><strong>Technologies Used</strong>: <strong>Python</strong>, <strong>Django</strong>, PyQT, AWS, XML Parsing</p>
 </section>
 </section>
 <section id="education">
