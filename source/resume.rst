@@ -57,15 +57,6 @@ To ensure data privacy, AI models were executed asynchronously on dedicated hard
 [2024] MaVieLocale : Freelance Python and AI Developer
 ------------------------------------------------------
 
-MaVieLocale aggregates local points of interests ( museums, monuments ... )  and events ( concerts, expositions, festivals ... ) into a single application.
-It faced a challenge in providing a performant search engine based on tags.
-
-I developed an automated tagging engine using langchain and a LLM.
-Due to the variety ( or randomness ) of generated tags, I used a vectorial database ( ChromaDB ) to link generated tags with business defined tags.
-Example : Searching for a "culture" would return results containing "exposition", "museum", "medieval".
-The related tags were sorted by relevant according to the weights assigned by the model.
-I delivered two services, one for tagging, another one for linking business and generated tags.
-
 At MaVieLocale, I worked on an application that aggregates local points of interest
 (such as museums and monuments) and events (like concerts, exhibitions, and festivals).
 The application faced a challenge in providing an efficient search engine based on tags.
@@ -76,7 +67,6 @@ For example, searching for "culture" would return results containing tags like "
 The related tags were sorted by relevance based on weights assigned by the model.
 
 I delivered two key services: one for automated tagging and another for linking business-defined tags with generated tags.
-
 
 **Technologies**: **Python**, **LangChain**, **ChromaDB**
 
