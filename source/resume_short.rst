@@ -1,9 +1,6 @@
-Mikhail Zaitsev [Condensed]
-===================
+Mikhail Zaitsev [SHORT]
+===========================
 
-**Full Version**: :doc:`Full Resume <index>`
-
------
 
 Python Django Developer | DevOps & AWS
 """""""""""""""""""""""""""""""""""""""
@@ -106,3 +103,15 @@ Languages
 ~~~~~~~~~~
 - Fluent in French and Russian
 - Proficient in English
+
+
+Articles
+---------
+
+.. toctree::
+    :maxdepth: 1
+
+    articles/devops/index
+    articles/management/index
+    articles/python_django/index
+    articles/fast_api/index

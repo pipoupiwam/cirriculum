@@ -3,14 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Mikhail Zaitsev [FULL]
+Mikhail Zaitsev [SHORT]
 ===========================================
 
-**Condensed Version**: :doc:`Condensed Resume <resume_short>`
+**FULL Version**: :doc:`FULL Resume <resume>`
 
 -----
 
-.. include:: resume.rst
+.. include:: resume_short.rst
    :start-line: 2
 
 

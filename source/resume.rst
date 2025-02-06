@@ -1,5 +1,10 @@
-Resume
-=================
+Mikhail Zaitsev [FULL]
+===========================
+
+**SHORT Version**: :doc:`SHORT Resume <index>`
+
+------
+
 
 Python Django Developer | DevOps & AWS
 """""""""""""""""""""""""""""""""""""""
