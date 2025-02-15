@@ -13,6 +13,8 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Fast API" href="../fast_api/index.html" />
+    <link rel="prev" title="Scheduling RQ tasks with RQ scheduler" href="rq_scheduler.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
@@ -51,10 +53,10 @@
 
 
 <h3>Navigation</h3>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../devops/index.html">DevOps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../management/index.html">Management</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html">Python / Django</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python / Django</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fast_api/index.html">Fast API</a></li>
 </ul>
 
@@ -69,8 +71,62 @@
             
   <section id="task-run-once">
 <h1>Task run Once<a class="headerlink" href="#task-run-once" title="Link to this heading">¶</a></h1>
-<p>Not yet available.</p>
-<p>Get code from automata project, adapt to be used without cacheops and asyncio.</p>
+<section id="scenario">
+<h2>Scenario<a class="headerlink" href="#scenario" title="Link to this heading">¶</a></h2>
+<p>On an e-commerce website, a task runs periodically to synchronize its database with suppliers inventory.</p>
+<p>To ensure the inventory is up to date, the task <strong>runs every 5 minutes</strong>.</p>
+<p>Several issues may arise that could lead to <strong>execution overlap</strong> and <strong>concurrent updates</strong>:</p>
+<ul class="simple">
+<li><p>Suppliers platform slowdowns or technical issues.</p></li>
+<li><p>Inventory size growth: A significant number of products may have been added over time.</p></li>
+<li><p>Resource limitations: Increased traffic can lead to performance degradation and execution slowdown.</p></li>
+</ul>
+<p>Once execution overlap occurs, other issues may emerge:</p>
+<ul class="simple">
+<li><p><strong>Queue size growth</strong> (if a single worker executes these tasks).</p></li>
+<li><p><strong>Performance degradation</strong>: Inventory updates can be resource-intensive. Multiple instances running simultaneously may degrade performance.</p></li>
+<li><p><strong>Data integrity</strong>: Multiple workers updating the same inventory with potentially outdated data.</p></li>
+<li><p><strong>Database locking</strong>: The codebase may contain locking mechanisms that could be triggered by the updating inventory task, resulting in a blocked database.</p></li>
+</ul>
+</section>
+<section id="solution">
+<h2>Solution<a class="headerlink" href="#solution" title="Link to this heading">¶</a></h2>
+<p>To avoid these issues, we could introduce a simple <strong>“locking mechanism”</strong> for this task to ensure that only a single instance runs at any given time.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
+
+<span class="k">def</span> <span class="nf">run_once</span><span class="p">(</span><span class="n">task_name</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># Check if the task is already in the cache</span>
+            <span class="k">if</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_name</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task &#39;</span><span class="si">{</span><span class="n">task_name</span><span class="si">}</span><span class="s2">&#39; is already running. Exiting.&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+
+            <span class="c1"># Add the task to the cache with a timeout</span>
+            <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">task_name</span><span class="p">,</span> <span class="s1">&#39;locked&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Execute the function</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="c1"># Remove the task from the cache</span>
+                <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">task_name</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+<span class="nd">@run_once</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s1">&#39;example_task&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">example_function</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Long execution .... &quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This simple decorator ensures that only a single task is executed at a time.
+I would suggest to implement a logging or monitoring mechanism to analyze the execution time of such tasks to prevent overlap and performance issues.</p>
+</section>
 </section>
 
 

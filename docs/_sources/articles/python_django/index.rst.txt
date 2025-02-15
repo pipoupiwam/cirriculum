@@ -11,4 +11,5 @@ Articles about Python with or without Django
     django_settings
     django_websockets
     rq_scheduler
+    task_run_once
 
